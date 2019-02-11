@@ -1,0 +1,21 @@
+<h1>Mis recargas</h1>
+<% if (recargas.length > 0) { %>
+<table class="responsive-table">
+    <tr>
+        <th width = "40%" align = "left">Fecha</th>
+        <th width = "40%" align = "left">Numero</th>
+        <th width = "20%" align = "left">Precio</th>
+    </tr>
+    <% recargas.foreach(function(recarga){ %>
+    <tr>
+        <td><%= recarga.fecha %></td>
+        <td><%= recarga.phone %></td>
+        <td>&sect;<%= recarga.amount %></td>
+    </tr>
+    <% }); %>
+</table>
+<% } else { %>
+<p>Usted no ha hecho ninguna recarga a&uacute;n</p>
+<% } %>
+
+<button onclick = "apretaste.send({command: 'RECARGAS'});">Atr&aacute;s</button>

@@ -1,0 +1,19 @@
+<h1>Ultimas recargas</h1>
+<table width = "100%" border = "1" class="table">
+    <tr>
+        <th width = "50%">Comprador</th>
+        <th width = "50%">Fecha</th>
+    </tr>
+    <% compradores.forEach(function(comprador){ %>
+    <tr>
+        <td><a href = "#!" onclick = "apretaste.send('PERFIL @<% comprador.user %>');">@
+                <% comprador.user %>
+            </a></td>
+        <td>
+            <% comprador.fecha %>
+        </td>
+    </tr>
+    <% }); %>
+</table>
+<button onclick = "apretaste.send('RECARGAS MIAS');">Mis recargas</button>
+<button onclick = "apretaste.send('RECARGAS');">Atr&aacute;s</button>
