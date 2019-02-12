@@ -1,8 +1,11 @@
+<!-- Este codigo es el del footer, que se puede incluir, .... include logo.ejs .... pero no esta funcionando el include -->
 <div class = "row">
     <div class = "col col-12">
+        <!-- No logro mostrar el logo -->
         <img src = "{{APP_IMAGE_PATH}}<% images.logo %>" alt = "Logo RECARGAS" width = "20%"/>
     </div>
 </div>
+<!-- --------------------------------- -->
 
 <div class = "row">
     <div class = "col col-12">
@@ -20,4 +23,27 @@
     </div>
 </div>
 
-<% include footer1.ejs %>
+<!-- Este codigo es el del footer, que se puede incluir, .... include footer1.ejs .... pero no esta funcionando el include -->
+<div class = "row">
+    <div class = "col col-12">
+        <% if (disponible) { %>
+        <h2>Recargar</h2>
+        Ingrese el número de celular para recargar. El numero debe iniciar con 53 y tener una longitud total de 10 digitos.
+
+        <input id="phoneNumber" type="text" class="validate" value="">
+        <button class = "btn btn-default" onclick = "apretaste.send({command: 'RECARGAS RECARGAR', data: {phoneNumber: $('#phoneNumber').val() }});" title = "n:Ingrese sú número de telefono con 53 al inicio, verifique antes de enviar ya que no es posible cambiarlo*">
+            Comprar
+        </button>
+        <% } else { %>
+        <small><b>La recarga del d&iacute;a se la llevo
+                <a href = "#!" onclick = "apretaste.send({command: 'PERFIL @<%= today[0].user %>', data: today[0].user});">@
+                    <%= today[0].user %>
+                </a></b></small>
+        <% } %>
+    </div>
+
+</div>
+<div class = "row">
+    <button class = "btn btn-gray" onclick = "apretaste.send({command: 'RECARGAS ANTERIORES'});">Anteriores</button>
+</div>
+<!-- --------------------------------- -->

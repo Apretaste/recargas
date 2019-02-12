@@ -23,16 +23,12 @@ class Service
 						  	AND CONVERT(B.`inserted_date`,DATE) = CONVERT(CURRENT_TIMESTAMP, DATE) 
 						  	AND B.product='1806121252'");
 
-		$images = ['logo' => $this->pathToService . '/recargas.png'];
+		$images = ['logo' => 'recargas.png'];
 
 		$data['images'] = $images;
 		$data['disponible'] = ! isset($today[0]);
 		$data['today'] = $today;
-		$response->setTemplate("$template.ejs", [
-			'images' => $images,
-			'disponible' => ! isset($today[0]),
-			'today' => $today
-		], $images);
+		$response->setTemplate("$template.ejs", $data, array_values($images));
 	}
 
 	/**
@@ -56,12 +52,12 @@ class Service
 	{
 		$this->setDefaultResponse($response, 'confirmar', $data);
 
-		$number = (strlen($request->data->query) == 10) ? $request->data->query : "";
+		$number = (strlen($request->input->data->phoneNumber) == 10) ? $request->input->data->phoneNumber : "";
 		$number = (substr($number, 0, 2) == "53") ? $number : "";
 
 		if( ! empty($number))
 		{
-			$user = Utils::getPerson($request->email);
+			$user = Utils::getPerson($request->person->email);
 
 			if(empty($user->phone)) Connection::query("UPDATE person SET phone='$number' WHERE email='$request->email'");
 
@@ -76,7 +72,7 @@ class Service
 			{
 				$response->setTemplate("text.ejs", [
 					"title" => "Error en su recarga",
-					"body" => "Usted tiene &sect;{$user->credit} de credito, lo cual no es suficiente para comprar la recarga con un valor de &sect;40"
+					"body" => html_entity_decode("Usted tiene &sect;{$user->credit} de credito, lo cual no es suficiente para comprar la recarga con un valor de &sect;40")
 				]);
 
 				return;
@@ -93,8 +89,8 @@ class Service
 		else
 		{
 			$response->setTemplate("text.ejs", [
-				"title" => "Error en su recarga",
-				"body" => "El número que ingreso es invalido. El numero debe iniciar con 53 y tener una longitud total de 10 numeros"
+				"title" => "Error en su recarga ",
+				"body" => html_entity_decode("El número $number que ingreso es inv&aacute;lido. El n&uacute;mero debe iniciar con 53 y tener una longitud total de 10 numeros")
 			]);
 		}
 

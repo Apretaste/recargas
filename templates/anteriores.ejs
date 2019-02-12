@@ -1,5 +1,6 @@
-<h1>Ultimas recargas</h1>
-<table width = "100%" border = "1" class="table">
+<h1>&Uacute;ltimas recargas</h1>
+
+<table class = "table-responsive">
     <tr>
         <th width = "50%">Comprador</th>
         <th width = "50%">Fecha</th>
@@ -14,6 +15,12 @@
         </td>
     </tr>
     <% }); %>
-</table>
-<button onclick = "apretaste.send('RECARGAS MIAS');">Mis recargas</button>
-<button onclick = "apretaste.send('RECARGAS');">Atr&aacute;s</button>
+</table><br/>
+<div class = "row">
+    <div class = "col col-s6">
+        <button class = "btn btn-deafult" onclick = "apretaste.send({command: 'RECARGAS MIAS'});">Mis recargas</button>
+    </div>
+    <div class = "col col-s6">
+        <button class = "btn btn-deafult" onclick = "apretaste.send({command: 'RECARGAS'});">Atr&aacute;s</button>
+    </div>
+</div>
