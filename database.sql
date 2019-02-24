@@ -3,7 +3,8 @@ CREATE TABLE `_recargas` (
   `person_id` int(11) NOT NULL,
   `product_code` varchar(20) NOT NULL,
   `inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `paid` timestamp NULL DEFAULT NULL
+  `paid` timestamp NULL DEFAULT NULL,
+  `paid_by` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 ALTER TABLE `_recargas`
