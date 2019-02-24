@@ -23,7 +23,7 @@ class Service
 
 		// get the recharge for today, or false
 		$recharge = Connection::query("
-			SELECT B.username, A.inserted
+			SELECT A.inserted, B.username
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
@@ -36,8 +36,15 @@ class Service
 			$response->setCache($minsUntilDayEnds);
 		}
 
+		// create the content array
+		$content = [
+			"price" => $price,
+			"cellphone" => $request->person->cellphone,
+			"recharge" => $recharge
+		];
+
 		// send data to the view
-		$response->setTemplate("home.ejs", ["price"=>$price, "recharge"=>$recharge]);
+		$response->setTemplate("home.ejs", $content);
 	}
 
 	/**
