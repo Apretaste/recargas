@@ -1,140 +1,66 @@
 <?php
 
-/**
- *
- * Reacargas Service
- */
 class Service
 {
-
-	/**
-	 * Default service response
-	 *
-	 * @param Response $response
-	 * @param $template
-	 * @param array $data
-	 */
-	public function setDefaultResponse(Response &$response, $template, &$data = [])
-	{
-
-		$today = Connection::query("SELECT A.username AS user, DATE_FORMAT(B.`inserted_date`, '%h:%i %p') AS hora 
-						 FROM person A JOIN `_tienda_orders` B 
-						  	ON A.email = B.email 
-						  	AND CONVERT(B.`inserted_date`,DATE) = CONVERT(CURRENT_TIMESTAMP, DATE) 
-						  	AND B.product='1806121252'");
-
-		$images = ['logo' => 'recargas.png'];
-
-		$data['images'] = $images;
-		$data['disponible'] = ! isset($today[0]);
-		$data['today'] = $today;
-		$response->setTemplate("$template.ejs", $data, array_values($images));
-	}
-
 	/**
 	 * Main
 	 *
+	 * @author salvipascual
 	 * @param Request $request
 	 * @param Response $response
 	 */
-	public function _main(Request $request, Response &$response)
+	public function _main(Request $request, Response $response)
 	{
-		$this->setDefaultResponse($response, 'main');
-	}
-
-	/**
-	 * RECARGAR subservice
-	 *
-	 * @param Request $request
-	 * @param Response $response
-	 */
-	public function _recargar(Request $request, Response &$response)
-	{
-		$this->setDefaultResponse($response, 'confirmar', $data);
-
-		$number = (strlen($request->input->data->phoneNumber) == 10) ? $request->input->data->phoneNumber : "";
-		$number = (substr($number, 0, 2) == "53") ? $number : "";
-
-		if( ! empty($number))
-		{
-			$user = Utils::getPerson($request->person->email);
-
-			if(empty($user->phone)) Connection::query("UPDATE person SET phone='$number' WHERE email='$request->email'");
-
-			if( ! $data['disponible'])
-			{
-				$response->setTemplate("nodisponible.ejs", ['today' => $data['today']]);
-
-				return;
-			}
-
-			if($user->credit < 40)
-			{
-				$response->setTemplate("text.ejs", [
-					"title" => "Error en su recarga",
-					"body" => html_entity_decode("Usted tiene &sect;{$user->credit} de credito, lo cual no es suficiente para comprar la recarga con un valor de &sect;40")
-				]);
-
-				return;
-			}
-
-			$confirmationHash = Utils::generateRandomHash();
-			Connection::query("START TRANSACTION;
-			        UPDATE person SET credit=credit-40 WHERE email='{$request->person->email}';
-			        UPDATE person SET credit=credit+40 WHERE email='alex@apretaste.com';
-			        INSERT INTO _tienda_orders(product,email,phone) VALUES('1806121252','{$request->person->email}','+$number');
-			        INSERT INTO transfer(sender,receiver,amount,confirmation_hash,inventory_code,transfered) VALUES ('{$request->person->email}', 'alex@apretaste.com', 40, '$confirmationHash', 'RECARGA',1);
-			        COMMIT;");
-		}
-		else
-		{
-			$response->setTemplate("text.ejs", [
-				"title" => "Error en su recarga ",
-				"body" => html_entity_decode("El número $number que ingreso es inv&aacute;lido. El n&uacute;mero debe iniciar con 53 y tener una longitud total de 10 numeros")
-			]);
+		// check if the user has a cellphone
+		$phone = $request->person->cellphone;
+		if(strlen($phone) != 10 || !substr($phone,0,2) === "53") {
+			return $response->setTemplate("phone.ejs", ["phone"=>$phone]);
 		}
 
+		// get the price for the recharge for today
+		$product = Connection::query("SELECT name, price FROM inventory WHERE code = 'CUBACEL_10'");
+		$price = $product[0]->price;
+
+		// get the recharge for today, or false
+		$recharge = Connection::query("
+			SELECT B.username, A.inserted
+			FROM _recargas A
+			JOIN person B 
+			ON A.person_id = B.id
+			WHERE inserted >= DATE(NOW())");
+		$recharge = empty($recharge) ? false : $recharge[0];
+
+		// set the cache till the end of the day
+		if($recharge) {
+			$minsUntilDayEnds = ceil((strtotime("23:59:59") - time()) / 60);
+			$response->setCache($minsUntilDayEnds);
+		}
+
+		// send data to the view
+		$response->setTemplate("home.ejs", ["price"=>$price, "recharge"=>$recharge]);
 	}
 
 	/**
-	 * ANTERIORES subservice
+	 * Check the last 20 previous recharges
 	 *
+	 * @author salvipascual
 	 * @param Request $request
-	 * @param Response $response
-	 *
+	 * @param Response $response	 
 	 */
-	public function _anteriores(Request $request, Response &$response)
+	public function _anteriores(Request $request, Response $response)
 	{
-		$data['compradores'] = Connection::query("SELECT A.username AS user, 
-					DATE_FORMAT(B.`inserted_date`, '%d/%m/%Y %h:%i %p') AS fecha 
-				FROM person A 
-				JOIN _tienda_orders B 
-      				ON A.email=B.email AND B.product='1806121252' 
-      			ORDER BY fecha DESC 
-      			LIMIT 30");
+		// get the recharge for today, or false
+		$recharges = Connection::query("
+			SELECT B.username, A.inserted
+			FROM _recargas A
+			JOIN person B 
+			ON A.person_id = B.id
+			ORDER BY A.inserted DESC
+			LIMIT 20");
 
-		$this->setDefaultResponse($response, 'anteriores', $data);
-	}
-
-	/**
-	 * MIAS subservice
-	 *
-	 * @param Request $request
-	 * @param Response $response
-	 *
-	 */
-	public function _mias(Request $request, Response &$response)
-	{
-		$data['recargas'] = Connection::query("SELECT DATE_FORMAT(B.`inserted_date`, '%d/%m/%Y %h:%i %p') AS fecha, 
-						A.amount AS amount, B.phone AS phone
-      			FROM `transfer` A JOIN _tienda_orders B 
-      			ON A.sender='$request->email' 
-      				AND B.email='$request->email' 
-      				AND A.inventory_code='RECARGA'
-      				AND CONVERT(B.`inserted_date`,DATE) = CONVERT(A.transfer_time,DATE) 
-      				AND B.product='1806121252'
-      			ORDER BY fecha DESC");
-
-		$this->setDefaultResponse($response, 'misrecargas', $data);
+		// set the cache till the end of the day and send data to the view
+		$minsUntilDayEnds = ceil((strtotime("23:59:59") - time()) / 60);
+		$response->setCache($minsUntilDayEnds);
+		$response->setTemplate("anteriores.ejs", ["recharges"=>$recharges]);
 	}
 }

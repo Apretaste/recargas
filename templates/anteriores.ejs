@@ -1,26 +1,28 @@
-<h1>&Uacute;ltimas recargas</h1>
+<div class="row">
+	<div class="col s12">
+		<h1>Últimas recargas</h1>
+		<p>Felitamos todos nuestros usuarios que han conseguido el crédito y canjeado por recargas. Para que todos les conozcan, listamos los últimos veinte a continuación.</p>
 
-<table class = "table-responsive">
-    <tr>
-        <th width = "50%">Comprador</th>
-        <th width = "50%">Fecha</th>
-    </tr>
-    <% compradores.forEach(function(comprador){ %>
-    <tr>
-        <td><a href = "#!" onclick = "apretaste.send('PERFIL @<% comprador.user %>');">@
-                <% comprador.user %>
-            </a></td>
-        <td>
-            <% comprador.fecha %>
-        </td>
-    </tr>
-    <% }); %>
-</table><br/>
-<div class = "row">
-    <div class = "col col-s6">
-        <button class = "btn btn-deafult" onclick = "apretaste.send({command: 'RECARGAS MIAS'});">Mis recargas</button>
-    </div>
-    <div class = "col col-s6">
-        <button class = "btn btn-deafult" onclick = "apretaste.send({command: 'RECARGAS'});">Atr&aacute;s</button>
-    </div>
+		<table class="striped">
+			<thead>
+				<tr>
+					<th>Usuario</th>
+					<th>Fecha</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% recharges.forEach(function(recharge){ %>
+				<tr>
+					<td><a href="#!" onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></a></td>
+					<td><%= formatDateTime(recharge.inserted) %></td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- GO BACK -->
+<div class="fixed-action-btn">
+	<a class="btn-floating btn-large waves-effect waves-light green" href="#!" onclick="apretaste.send({'command':'RECARGAS'})"><i class="material-icons">arrow_back</i></a>
 </div>

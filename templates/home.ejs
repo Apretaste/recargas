@@ -1,0 +1,24 @@
+<div class="row">
+	<div class="col s12">
+		<h1>Recarga diaria</h1>
+		<p>Con la ayuda de nuestros sponsors, ofrecemos una recarga Cubacel al día. El primero que entre podrá obtenerla por un valor de §<%= price %> créditos. Si no la obtienes hoy, mañana estará disponible.</p>
+
+		<% if (recharge) { %>
+			<p>
+				La recarga del día de hoy se la llevó 
+				<a href="#!" onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></a>
+				a las 
+				<%= formatTime(recharge.inserted) %>
+			</p>
+			<p>Si hoy te cogió tarde, no te desanimes. Mañana habra otra recarga esperando por tí.</p>
+		<% } else { %>
+			<p>La recarga del día aún esta disponible. ¡Apúrate antes que alguien más se la lleve!</p>
+			<a class="waves-effect waves-light btn" href="#!" onclick="apretaste.send({'command':'CREDITO PROCESAR','data':{'item':'CUBACEL_10'}})">Canjear por §<%= price %></a>
+		<% } %>
+	</div>
+</div>
+
+<!-- RECARGAS ANTERIORES -->
+<div class="fixed-action-btn">
+	<a class="btn-floating btn-large waves-effect waves-light green" href="#!" onclick="apretaste.send({'command':'RECARGAS ANTERIORES'})"><i class="material-icons">hourglass_empty</i></a>
+</div>
