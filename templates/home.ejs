@@ -5,6 +5,8 @@
 
 		<% if (recharge) { %>
 			<p>La recarga del día de hoy se la llevó <a href="#!" onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></a> a las <%= formatTime(recharge.inserted) %>. No te desanimes. Mañana habra otra recarga esperando por tí.</p>
+		<% } else if(hasRechargeInLastMonth){ %>
+			<p>Usted ya realizó una recarga este mes, solo se permite una recarga mensual por usuário</p>
 		<% } else { %>
 			<p>Usando el botón a continuación puede enviar una recarga al número <b><%= cellphone %></b>. Cambie su teléfono desde el perfil.</p>
 			<a class="waves-effect waves-light btn" href="#!" onclick="apretaste.send({'command':'CREDITO PROCESAR','data':{'item':'CUBACEL_10'}})">Canjear por §<%= price %></a>

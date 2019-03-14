@@ -11,10 +11,15 @@
 function payment(Payment $payment)
 {
 	// check if a recharge was done already today
-	$recharge = Connection::query("
-		SELECT * 
+	$recharge = Connection::query(
+		"SELECT * 
 		FROM _recargas 
-		WHERE inserted >= DATE(NOW())");
+		WHERE inserted >= DATE(NOW())
+		UNION
+		SELECT A.* FROM person A 
+		JOIN `_tienda_orders` B ON A.email=B.email 
+		AND CONVERT(B.`inserted_date`,DATE) = CONVERT(CURRENT_TIMESTAMP,DATE) 
+		AND B.product='1806121252'");
 
 	// do not continue if a purchase was already made today
 	if($recharge) return false;
