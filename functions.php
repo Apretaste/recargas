@@ -26,8 +26,10 @@ function payment(Payment $payment)
 
 	// add the recharge to the table
 	Connection::query("
-		INSERT INTO _recargas (person_id, product_code, cellphone) 
+		INSERT IGNORE INTO _recargas (person_id, product_code, cellphone) 
 		VALUES ({$payment->buyer->id}, '{$payment->code}', '{$payment->buyer->cellphone}')");
+
+	if (Connection::lastAffectedRows() < 1) return false;
 
 	return true;
 }
