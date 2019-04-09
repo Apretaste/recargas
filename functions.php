@@ -28,8 +28,8 @@ function payment(Payment $payment)
 	// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
 
 	Connection::query("
-		INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage) 
-		VALUES ({$payment->buyer->id}, '{$payment->code}', '{$payment->buyer->cellphone}', 2)");
+		INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date) 
+		VALUES ({$payment->buyer->id}, '{$payment->code}', '{$payment->buyer->cellphone}', 2, CURRENT_DATE)");
 
 	if (Connection::lastAffectedRows() < 1) return false;
 
