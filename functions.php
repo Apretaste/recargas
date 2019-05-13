@@ -25,7 +25,7 @@ function payment(Payment $payment)
 	if($recharge[0]->total > 0) return false;
 
 	// do not continue if the phone number is blocked for scams
-	$blocked = "SELECT * FROM blocked_numbers WHERE cellphone='{$payment->buyer->cellphone}'";
+	$blocked = Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='{$payment->buyer->cellphone}'");
 	if($blocked) return false;
 
 	$isOldUser = date_diff(new DateTime(), new DateTime($payment->buyer->insertion_date))->days > 60;
