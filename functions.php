@@ -16,13 +16,20 @@ function payment(Payment $payment)
 		FROM _recargas 
 		WHERE inserted >= DATE(NOW())
 		UNION
-		SELECT COUNT(A.*) AS total FROM person A 
+		SELECT COUNT(*) AS total FROM person A 
 		JOIN `_tienda_orders` B ON A.email=B.email 
 		AND CONVERT(B.`inserted_date`,DATE) = CONVERT(CURRENT_TIMESTAMP,DATE) 
 		AND B.product='1806121252'");
 
 	// do not continue if a purchase was already made today
-	if($recharge) return false;
+	if($recharge[0]->total > 0) return false;
+
+	// do not continue if the phone number is blocked for scams
+	$blocked = "SELECT * FROM blocked_numbers WHERE cellphone='{$payment->buyer->cellphone}'";
+	if($blocked) return false;
+
+	$isOldUser = date_diff(new DateTime(), new DateTime($payment->buyer->insertion_date))->days > 60;
+	if(!$isOldUser) return false;
 
 	// add the recharge to the table
 	// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"

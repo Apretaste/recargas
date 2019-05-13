@@ -52,12 +52,19 @@ class Service
 			$response->setCache($minsUntilDayEnds);
 		}
 
+		$phoneIsBlocked = Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='$phone'");
+		$phoneIsBlocked = !empty($phoneIsBlocked);
+
+		$isOldUser = date_diff(new DateTime(), new DateTime($request->person->insertion_date))->days > 60;
+
 		// create the content array
 		$content = [
 			"price" => $price,
 			"cellphone" => $request->person->cellphone,
 			"recharge" => $recharge,
-			"hasRechargeInLastMonth" => $lastMonth
+			"hasRechargeInLastMonth" => $lastMonth,
+			"phoneIsBlocked" => $phoneIsBlocked,
+			"isOldUser" => $isOldUser
 		];
 
 		// send data to the view
