@@ -12,11 +12,11 @@ function payment(Payment $payment)
 {
 	// check if a recharge was done already today
 	$recharge = Connection::query(
-		"SELECT * 
+		"SELECT COUNT(*) AS total 
 		FROM _recargas 
 		WHERE inserted >= DATE(NOW())
 		UNION
-		SELECT A.* FROM person A 
+		SELECT COUNT(A.*) AS total FROM person A 
 		JOIN `_tienda_orders` B ON A.email=B.email 
 		AND CONVERT(B.`inserted_date`,DATE) = CONVERT(CURRENT_TIMESTAMP,DATE) 
 		AND B.product='1806121252'");
