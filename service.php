@@ -80,17 +80,14 @@ class Service
 	 */
 	public function _anteriores(Request $request, Response $response)
 	{
-		// get the recharge for today, or false
-		$recharges = Connection::query(
-			"SELECT * FROM (SELECT B.username, A.inserted
+		// show a list of previous recharges
+		$recharges = Connection::query("
+			SELECT B.username, DATE_FORMAT(A.paid, '%e/%c/%Y') AS paid
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
-			UNION
-			SELECT A.username, B.`inserted_date` AS inserted FROM person A 
-			JOIN `_tienda_orders` B ON A.email=B.email 
-			AND B.product='1806121252') A
-			ORDER BY inserted DESC");
+			ORDER BY inserted ASC
+			LIMIT 20");
 
 		// set the cache till the end of the day and send data to the view
 		$minsUntilDayEnds = ceil((strtotime("23:59:59") - time()) / 60);
