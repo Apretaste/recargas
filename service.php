@@ -87,6 +87,7 @@ class Service
 			JOIN person B 
 			ON A.person_id = B.id
 			WHERE A.paid IS NOT NULL
+			AND A.reason IS NULL
 			ORDER BY paid DESC
 			LIMIT 20");
 
