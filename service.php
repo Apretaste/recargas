@@ -86,7 +86,8 @@ class Service
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
-			ORDER BY inserted ASC
+			WHERE A.paid IS NOT NULL
+			ORDER BY paid DESC
 			LIMIT 20");
 
 		// set the cache till the end of the day and send data to the view
