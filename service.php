@@ -82,13 +82,11 @@ class Service
 	{
 		// show a list of previous recharges
 		$recharges = Connection::query("
-			SELECT B.username, DATE_FORMAT(A.paid, '%e/%c/%Y') AS paid
+			SELECT B.username, DATE_FORMAT(A.inserted, '%e/%c/%Y') AS inserted
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
-			WHERE A.paid IS NOT NULL
-			AND A.reason IS NULL
-			ORDER BY paid DESC
+			ORDER BY A.inserted DESC
 			LIMIT 20");
 
 		// set the cache till the end of the day and send data to the view

@@ -14,7 +14,7 @@
 				<% recharges.forEach(function(recharge) { %> 
 				<tr>
 					<td><a href="#!" onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></a></td>
-					<td><%= recharge.paid %></td>
+					<td><%= recharge.inserted %></td>
 				</tr>
 				<% }) %>
 			</tbody>
