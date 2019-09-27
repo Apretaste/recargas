@@ -1,3 +1,7 @@
+$(document).ready(function(){
+	$('.tabs').tabs();
+});
+
 function pad(n, width, z) {
 	z = z || '0';
 	n = n + '';

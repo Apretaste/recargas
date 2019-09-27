@@ -35,16 +35,15 @@ class Service
 			AND B.product='1806121252'");
 		$recharge = empty($recharge) ? false : $recharge[0];
 
-		$lastMonth = Connection::query(
+		// check if the user has bough a recharge the current month
+		$lastMonth = !empty(Connection::query(
 			"SELECT id FROM _recargas 
 			WHERE person_id='{$request->person->id}'
 			AND MONTH(inserted)=MONTH(CURRENT_DATE)
 			UNION
 			SELECT id FROM _tienda_orders WHERE email=(SELECT email FROM person 
 			WHERE id='{$request->person->id}')
-			AND MONTH(inserted_date)=MONTH(CURRENT_DATE)");
-
-		$lastMonth = !empty($lastMonth);
+			AND MONTH(inserted_date)=MONTH(CURRENT_DATE)"));
 
 		// set the cache till the end of the day
 		if($recharge) {
@@ -52,9 +51,10 @@ class Service
 			$response->setCache($minsUntilDayEnds);
 		}
 
-		$phoneIsBlocked = Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='$phone'");
-		$phoneIsBlocked = !empty($phoneIsBlocked);
+		// check if the phone is blocked
+		$phoneIsBlocked = !empty(Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='$phone'"));
 
+		// check if the user is a month old
 		$isOldUser = date_diff(new DateTime(), new DateTime($request->person->insertion_date))->days > 60;
 
 		// create the content array
@@ -82,7 +82,7 @@ class Service
 	{
 		// show a list of previous recharges
 		$recharges = Connection::query("
-			SELECT B.username, DATE_FORMAT(A.inserted, '%e/%c/%Y') AS inserted
+			SELECT B.username, DATE_FORMAT(A.inserted, '%e/%c/%Y %r') AS inserted
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id

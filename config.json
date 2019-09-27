@@ -1,8 +1,8 @@
 {
-  "name": "recargas",
-  "version": 6,
-  "description": "Recarga tu móvil usando crédito de Apretaste",
-  "category": "negocios",
-  "creator": "kuma@apretaste.org",
-  "listed": 1
+	"name": "recargas",
+	"version": 7,
+	"description": "Recarga el móvil usando tu crédito de Apretaste",
+	"category": "negocios",
+	"creator": "kuma@apretaste.org",
+	"listed": true
 }
