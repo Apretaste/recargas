@@ -1,5 +1,6 @@
 $(document).ready(function(){
 	$('.tabs').tabs();
+	$('.modal').modal();
 });
 
 function pad(n, width, z) {
@@ -39,4 +40,19 @@ function formatTime(dateStr) {
 	var minutes = pad(date.getMinutes(), 2);
 	var amOrPm = (date.getHours() < 12) ? "am" : "pm";
 	return hour + ':' + minutes + amOrPm;
+}
+
+// show the modal popup
+function openModal(code) {
+	$('#modal').modal('open');
+}
+
+// start a new purchase
+function buy() {
+	// execute the transfer
+	apretaste.send({
+		command: "CREDITO PURCHASE", 
+		data: {'item': 'CUBACEL_10'},
+		redirect: true
+	});
 }

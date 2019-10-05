@@ -17,8 +17,19 @@
 			<p>Lo sentimos, para realizar una recarga su usuario debe tener más de dos meses registrado.</p>
 		<% } else { %>
 			<p>Usando el botón a continuación puede enviar una recarga al número <b><%= cellphone %></b>. Cambie su teléfono desde el perfil.</p>
-			<a class="waves-effect waves-light btn" href="#!" onclick="apretaste.send({'command':'CREDITO PROCESAR','data':{'item':'CUBACEL_10'}})">Canjear por §<%= price %></a>
+			<a class="waves-effect waves-light btn" href="#!" onclick="openModal()">Canjear por §<%= price %></a>
 			<p><small>Las recargas pueden demorar hasta 3 días en acreditarse.</small></p>
 		<% } %>
+	</div>
+</div>
+
+<div id="modal" class="modal">
+	<div class="modal-content">
+		<input id="code" type="hidden">
+		<p>¿Esta seguro de realizar este canje? Esta acción es irrevocable.</p>
+	</div>
+	<div class="modal-footer">
+		<a href="#!" class="modal-close waves-effect waves-light btn-flat">Cancelar</a>
+		<a onclick="buy()" class="modal-close waves-effect waves-green btn-flat green-text">Canjear</a>
 	</div>
 </div>
