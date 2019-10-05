@@ -5,7 +5,7 @@
 			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS ANTERIORES'})">Últimos canjes</a></li>
 		</ul>
 
-		<p>El primero que llegue podrá canjear §<%= price %> créditos por una recarga Cubacel. Si no la obtienes hoy, mañana habrá otra disponible.</p>
+		<p>El primero que llegue podrá canjear una recarga Cubacel por §<%= price %> créditos. El contador se reinicia a diario, a las 11:59:59 PM, por lo que si no la obtienes hoy, mañana habrá otra disponible. ¡Mucha suerte!</p>
 
 		<% if (recharge) { %>
 			<p>La recarga del día de hoy se la llevó <a href="#!" onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></a> a las <%= formatTime(recharge.inserted) %>. No te desanimes. Mañana habra otra recarga esperando por tí.</p>
