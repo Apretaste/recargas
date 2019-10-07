@@ -10,35 +10,35 @@
  */
 function payment(Payment $payment)
 {
-	// check if a recharge was done already today
-	$recharge = Connection::query(
-		"SELECT COUNT(*) AS total 
+	// check if a recharge was already done today
+	$recharge = Connection::query("
+		SELECT COUNT(id) AS total
 		FROM _recargas 
-		WHERE inserted >= DATE(NOW())
-		UNION
-		SELECT COUNT(*) AS total FROM person A 
-		JOIN `_tienda_orders` B ON A.email=B.email 
-		AND CONVERT(B.`inserted_date`,DATE) = CONVERT(CURRENT_TIMESTAMP,DATE) 
-		AND B.product='1806121252'");
+		WHERE inserted >= DATE(NOW())");
 
 	// do not continue if a purchase was already made today
 	if($recharge[0]->total > 0) return false;
 
+	// get the buyer Person object
+	$buyer = Utils::getPerson($payment->buyer);
+
 	// do not continue if the phone number is blocked for scams
-	$blocked = Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='{$payment->buyer->cellphone}'");
+	$blocked = Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='{$buyer->cellphone}'");
 	if($blocked) return false;
 
-	$isOldUser = date_diff(new DateTime(), new DateTime($payment->buyer->insertion_date))->days > 60;
+	// check the buyer is at least one month old
+	$isOldUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date))->days > 60;
 	if(!$isOldUser) return false;
 
 	// add the recharge to the table
 	// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
-
 	Connection::query("
-		INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date) 
-		VALUES ({$payment->buyer->id}, '{$payment->code}', '{$payment->buyer->cellphone}', 2, CURRENT_DATE)");
+		INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage)
+		VALUES ({$buyer->id}, '{$payment->code}', '{$buyer->cellphone}', 2)");
 
+	// return false if no row was created (time collisions)
 	if (Connection::lastAffectedRows() < 1) return false;
 
+	// return OK
 	return true;
 }

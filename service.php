@@ -22,28 +22,19 @@ class Service
 		$price = $product[0]->price;
 
 		// get the recharge for today, or false
-		$recharge = Connection::query(
-			"SELECT A.inserted, B.username
+		$recharge = Connection::query("
+			SELECT A.inserted, B.username
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
-			WHERE inserted >= DATE(NOW())
-			UNION
-			SELECT B.`inserted_date` AS inserted, A.username FROM person A 
-			JOIN `_tienda_orders` B ON A.email=B.email 
-			AND DATE(B.`inserted_date`) = CURRENT_DATE
-			AND B.product='1806121252'");
+			WHERE inserted >= DATE(NOW())");
 		$recharge = empty($recharge) ? false : $recharge[0];
 
 		// check if the user has bough a recharge the current month
-		$lastMonth = !empty(Connection::query(
-			"SELECT id FROM _recargas 
-			WHERE person_id='{$request->person->id}'
-			AND MONTH(inserted)=MONTH(CURRENT_DATE)
-			UNION
-			SELECT id FROM _tienda_orders WHERE email=(SELECT email FROM person 
-			WHERE id='{$request->person->id}')
-			AND MONTH(inserted_date)=MONTH(CURRENT_DATE)"));
+		$lastMonth = !empty(Connection::query("
+			SELECT id FROM _recargas 
+			WHERE person_id = '{$request->person->id}'
+			AND MONTH(inserted) = MONTH(CURRENT_DATE)"));
 
 		// set the cache till the end of the day
 		if($recharge) {
