@@ -47,12 +47,11 @@ function openModal(code) {
 	$('#modal').modal('open');
 }
 
-// start a new purchase
-function buy() {
-	// execute the transfer
+// create a new purchase
+function pay() {
 	apretaste.send({
-		command: "CREDITO PURCHASE", 
-		data: {'item': 'CUBACEL_10'},
+		command: "RECARGAS PAY", 
+		data: {'code': 'CUBACEL_10'},
 		redirect: true
 	});
 }

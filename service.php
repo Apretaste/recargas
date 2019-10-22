@@ -85,4 +85,61 @@ class Service
 		$response->setCache($minsUntilDayEnds);
 		$response->setTemplate("anteriores.ejs", ["recharges"=>$recharges]);
 	}
+
+	/**
+	 * Pay for an item and add the items to the database
+	 *
+	 * @param Request
+	 * @param Response
+	 * @throws Exception
+	 */
+	public function _pay(Request $request, Response $response)
+	{
+		// get buyer and code
+		$buyer = $request->person;
+		$code = $request->input->data->code;
+
+		// check if a recharge was already done today
+		$isMaxReached = Connection::query("SELECT COUNT(id) AS cnt FROM _recargas WHERE inserted >= DATE(NOW())")[0]->cnt > 0;
+
+		// do not continue if the phone number is blocked for scams
+		$isUserBlocked = Connection::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone='{$buyer->cellphone}'")[0]->cnt > 0;
+
+		// check the buyer is at least one month old
+		$isNewUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date))->days < 60;
+
+		// do not continue if a rule is broken
+		if($isMaxReached || $isUserBlocked || $isNewUser) {
+			return $response->setTemplate('message.ejs', [
+				"header"=>"Canje rechazado",
+				"icon"=>"sentiment_very_dissatisfied",
+				"text" => "Su canje ha sido rechazado. La razón más común es que el máximo diario de recargas ha sido alcanzado, o que su usuario no tenga permisos para comprar recargas.",
+				"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
+		}
+
+		// process the payment
+		try {
+			MoneyNew::buy($buyer->id, $code);
+		} catch (Exception $e) {
+			echo $e->getMessage();
+			return $response->setTemplate('message.ejs', [
+				"header"=>"Error inesperado",
+				"icon"=>"sentiment_very_dissatisfied",
+				"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
+				"button" => ["href"=>"RECARGAS", "caption"=>"Reintentar"]]);
+		}
+
+		// add the recharge to the table
+		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
+		Connection::query("
+			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage)
+			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2)");
+
+		// possitive response
+		return $response->setTemplate('message.ejs', [  
+			"header"=>"Canje realizado",
+			"icon"=>"sentiment_very_satisfied",
+			"text" => "Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.",
+			"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
+	}
 }
