@@ -23,7 +23,7 @@ class Service
 
 		// get the recharge for today, or false
 		$recharge = Connection::query("
-			SELECT A.inserted, B.username
+			SELECT A.inserted, B.username, B.avatar, B.avatarColor
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
@@ -67,13 +67,13 @@ class Service
 	 *
 	 * @author salvipascual
 	 * @param Request $request
-	 * @param Response $response	 
+	 * @param Response $response
 	 */
 	public function _anteriores(Request $request, Response $response)
 	{
 		// show a list of previous recharges
 		$recharges = Connection::query("
-			SELECT B.username, DATE_FORMAT(A.inserted, '%e/%c/%Y %r') AS inserted
+			SELECT B.username, DATE_FORMAT(A.inserted, '%e/%c/%Y %r') AS inserted, B.avatar, B.avatarColor
 			FROM _recargas A
 			JOIN person B 
 			ON A.person_id = B.id
@@ -136,7 +136,7 @@ class Service
 			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2)");
 
 		// possitive response
-		return $response->setTemplate('message.ejs', [  
+		return $response->setTemplate('message.ejs', [
 			"header"=>"Canje realizado",
 			"icon"=>"sentiment_very_satisfied",
 			"text" => "Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.",

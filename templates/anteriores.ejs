@@ -7,21 +7,17 @@
 
 		<p>Felicitamos a todos nuestros usuarios que han conseguido el crédito necesario y canjeado una recarga. Para que todos los conozcan, listamos los últimos veinte a continuación</p>
 
-		<table class="table striped centered">
-			<thead>
-				<tr>
-					<th>Usuario</th>
-					<th>Fecha</th>
-				</tr>
-			</thead>
-			<tbody>
-				<% recharges.forEach(function(recharge) { %> 
-				<tr>
-					<td><a href="#!" onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></a></td>
-					<td><%= recharge.inserted %></td>
-				</tr>
+		<ul class="collection">
+			<li class="collection-item avatar" style="min-height: auto">
+				<% recharges.forEach(function(recharge) { %>
+					<div class="circle"
+						 style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images", 42) %> background-color: <%= colors[recharge.avatarColor] %>;">
+					</div>
+
+					<span class="title"><b onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
+					<p><%= recharge.inserted %></p>
 				<% }) %>
-			</tbody>
-		</table>
+			</li>
+		</ul>
 	</div>
 </div>
