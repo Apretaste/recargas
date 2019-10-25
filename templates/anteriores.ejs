@@ -1,23 +1,25 @@
 <div class="row">
-	<div class="col s12">
-		<ul class="tabs tabs-fixed-width">
-			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS'})">Recarga Diaria</a></li>
-			<li class="tab"><a href="#" class="active">Últimos canjes</a></li>
-		</ul>
+    <div class="col s12">
+        <ul class="tabs tabs-fixed-width">
+            <li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS'})">Recarga Diaria</a></li>
+            <li class="tab"><a href="#" class="active">Últimos canjes</a></li>
+        </ul>
 
-		<p>Felicitamos a todos nuestros usuarios que han conseguido el crédito necesario y canjeado una recarga. Para que todos los conozcan, listamos los últimos veinte a continuación</p>
+        <p>Felicitamos a todos nuestros usuarios que han conseguido el crédito necesario y canjeado una recarga. Para
+            que todos los conozcan, listamos los últimos veinte a continuación</p>
 
-		<ul class="collection">
-			<li class="collection-item avatar" style="min-height: auto">
-				<% recharges.forEach(function(recharge) { %>
-					<div class="circle"
-						 style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images", 42) %> background-color: <%= colors[recharge.avatarColor] %>;">
-					</div>
+        <ul class="collection">
+            <% recharges.forEach(function(recharge) { %>
+                <li class="collection-item avatar" style="min-height: auto">
+                    <div class="circle"
+                         style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images", 42) %> background-color: <%= colors[recharge.avatarColor] %>;">
+                    </div>
 
-					<span class="title"><b onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
-					<p><%= recharge.inserted %></p>
-				<% }) %>
-			</li>
-		</ul>
-	</div>
+                    <span class="title"><b
+                                onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
+                    <p><%= recharge.inserted %></p>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
 </div>
