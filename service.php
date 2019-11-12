@@ -9,7 +9,7 @@ class Service
 	 * @param Request $request
 	 * @param Response $response
 	 */
-	public function _main(Request $request, Response $response)
+	public function _main (Request $request, Response $response)
 	{
 		// check if the user has a cellphone
 		$phone = $request->person->cellphone;
@@ -69,7 +69,7 @@ class Service
 	 * @param Request $request
 	 * @param Response $response
 	 */
-	public function _anteriores(Request $request, Response $response)
+	public function _anteriores (Request $request, Response $response)
 	{
 		// show a list of previous recharges
 		$recharges = Connection::query("
@@ -93,7 +93,7 @@ class Service
 	 * @param Response
 	 * @throws Exception
 	 */
-	public function _pay(Request $request, Response $response)
+	public function _pay (Request $request, Response $response)
 	{
 		// get buyer and code
 		$buyer = $request->person;
@@ -102,6 +102,15 @@ class Service
 		// check if a recharge was already done today
 		$isMaxReached = Connection::query("SELECT COUNT(id) AS cnt FROM _recargas WHERE inserted >= DATE(NOW())")[0]->cnt > 0;
 
+		// do not continue if recharges max was reached today
+		if($isMaxReached) {
+			return $response->setTemplate('message.ejs', [
+				"header"=>"¡Sigue intentando!",
+				"icon"=>"sentiment_very_dissatisfied",
+				"text" => "Lamentablemente, alguien más fue un poco más rápido que tú y canjeo la recarga del día. No te desanimes, mañana tendrás otra oportunidad para tratar de canjearla.",
+				"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
+		}
+
 		// do not continue if the phone number is blocked for scams
 		$isUserBlocked = Connection::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone='{$buyer->cellphone}'")[0]->cnt > 0;
 
@@ -109,11 +118,11 @@ class Service
 		$isNewUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date))->days < 60;
 
 		// do not continue if a rule is broken
-		if($isMaxReached || $isUserBlocked || $isNewUser) {
+		if($isUserBlocked || $isNewUser) {
 			return $response->setTemplate('message.ejs', [
 				"header"=>"Canje rechazado",
 				"icon"=>"sentiment_very_dissatisfied",
-				"text" => "Su canje ha sido rechazado. La razón más común es que el máximo diario de recargas ha sido alcanzado, o que su usuario no tenga permisos para comprar recargas.",
+				"text" => "Puede que su usuario esté bloqueado o que aún no tenga permisos para comprar recargas. Por favor consulte el soporte si tiene alguna duda.",
 				"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
 		}
 
