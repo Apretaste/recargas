@@ -34,7 +34,7 @@ class Service
 		$lastMonth = !empty(Connection::query("
 			SELECT id FROM _recargas 
 			WHERE person_id = '{$request->person->id}'
-			AND MONTH(inserted) = MONTH(CURRENT_DATE)"));
+			AND MONTH(inserted) = MONTH(CURRENT_DATE) AND YEAR(inserted) = YEAR(CURRENT_DATE)"));
 
 		// set the cache till the end of the day
 		if($recharge) {
