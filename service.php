@@ -141,8 +141,8 @@ class Service
 		// add the recharge to the table
 		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
 		Connection::query("
-			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage)
-			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2)");
+			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date)
+			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2, CURRENT_DATE)");
 
 		// possitive response
 		return $response->setTemplate('message.ejs', [
