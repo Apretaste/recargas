@@ -14,12 +14,8 @@
             <p>La recarga del día de hoy se la llevó</p>
             <ul class="collection" style="margin: 0; border: none;">
                 <li class="collection-item avatar" style="min-height: auto;padding-top: 0;padding-bottom: 0;">
-                    <div class="circle"
-                         style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images", 42) %> background-color: <%= colors[recharge.avatarColor] %>;">
-                    </div>
-
-                    <span class="title"><b
-                                onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
+                    <div class="person-avatar circle" face="<%= recharge.avatar %>" color="<%= colors[recharge.avatarColor] %>" size="42"></div>
+                    <span class="title"><b onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
                     <p><%= formatTime(recharge.inserted) %></p>
                 </li>
             </ul>
