@@ -2,6 +2,15 @@
 
 class Service
 {
+	public function checkNumber(&$number){
+		$number = trim($number);
+		$number = str_replace(['-', ' ', '+', '(', ')'], '', $number);
+		if (strlen($number) === 8) $number = "53$number";
+		if (strlen($number) !== 10) return false;
+		if (strpos($number, '53')!==0) return false;
+		return true;
+	}
+
 	/**
 	 * Main
 	 *
@@ -13,7 +22,7 @@ class Service
 	{
 		// check if the user has a cellphone
 		$phone = $request->person->cellphone;
-		if(strlen($phone) != 10 || !substr($phone,0,2) ==='53') {
+		if(!$this->checkNumber($phone)) {
 			return $response->setTemplate('phone.ejs', ['phone' =>$phone]);
 		}
 
