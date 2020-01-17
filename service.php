@@ -155,6 +155,10 @@ class Service
 					MoneyNew::buy($buyer->id, $code);
 				} catch (Exception $e) {
 					echo $e->getMessage();
+
+					// rollback
+					Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
+
 					$response->setTemplate('message.ejs', [
 							'header' => 'Error inesperado',
 							'icon'   => 'sentiment_very_dissatisfied',
