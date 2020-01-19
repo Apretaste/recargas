@@ -4,24 +4,23 @@ use Framework\Database;
 use Apretaste\Request;
 use Apretaste\Response;
 
-
 class Service
 {
 	/**
 	 * Main
 	 *
-	 * @param Request  $request
+	 * @param Request $request
 	 * @param Response $response
 	 *
 	 * @throws \Exception
 	 * @author salvipascual
 	 */
-	public function _main (Request $request, Response &$response)
+	public function _main(Request $request, Response &$response)
 	{
 		// check if the user has a cellphone
 		$phone = $request->person->cellphone;
-		if(strlen($phone) != 10 || !substr($phone,0,2) === "53") {
-			$response->setTemplate("phone.ejs", ["phone"=>$phone]);
+		if (strlen($phone) != 10 || !substr($phone, 0, 2) === "53") {
+			$response->setTemplate("phone.ejs", ["phone" => $phone]);
 			return;
 		}
 
@@ -45,7 +44,7 @@ class Service
 			AND MONTH(inserted) = MONTH(CURRENT_DATE) AND YEAR(inserted) = YEAR(CURRENT_DATE)"));
 
 		// set the cache till the end of the day
-		if($recharge) {
+		if ($recharge) {
 			$minsUntilDayEnds = ceil((strtotime("23:59:59") - time()) / 60);
 			$response->setCache($minsUntilDayEnds);
 		}
@@ -73,13 +72,13 @@ class Service
 	/**
 	 * Check the last 20 previous recharges
 	 *
-	 * @param Request  $request
+	 * @param Request $request
 	 * @param Response $response
 	 *
 	 * @throws \Framework\Alert
 	 * @author salvipascual
 	 */
-	public function _anteriores (Request $request, Response &$response)
+	public function _anteriores(Request $request, Response &$response)
 	{
 		// show a list of previous recharges
 		$recharges = Database::query("
@@ -93,18 +92,18 @@ class Service
 		// set the cache till the end of the day and send data to the view
 		$minsUntilDayEnds = ceil((strtotime("23:59:59") - time()) / 60);
 		$response->setCache($minsUntilDayEnds);
-		$response->setTemplate("anteriores.ejs", ["recharges"=>$recharges]);
+		$response->setTemplate("anteriores.ejs", ["recharges" => $recharges]);
 	}
 
 	/**
 	 * Pay for an item and add the items to the database
 	 *
-	 * @param \Apretaste\Request  $request
+	 * @param \Apretaste\Request $request
 	 * @param \Apretaste\Response $response
 	 *
 	 * @throws \Framework\Alert
 	 */
-	public function _pay (Request $request, Response &$response)
+	public function _pay(Request $request, Response &$response)
 	{
 		// get buyer and code
 		$buyer = $request->person;
@@ -114,12 +113,12 @@ class Service
 		$isMaxReached = Database::query("SELECT COUNT(id) AS cnt FROM _recargas WHERE inserted >= DATE(NOW())")[0]->cnt > 0;
 
 		// do not continue if recharges max was reached today
-		if($isMaxReached) {
+		if ($isMaxReached) {
 			$response->setTemplate('message.ejs', [
-				"header"=>"¡Sigue intentando!",
-				"icon"=>"sentiment_very_dissatisfied",
+				"header" => "¡Sigue intentando!",
+				"icon" => "sentiment_very_dissatisfied",
 				"text" => "Lamentablemente, alguien más fue un poco más rápido que tú y canjeo la recarga del día. No te desanimes, mañana tendrás otra oportunidad para tratar de canjearla.",
-				"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
+				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]]);
 			return;
 		}
 
@@ -130,12 +129,12 @@ class Service
 		$isNewUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date))->days < 60;
 
 		// do not continue if a rule is broken
-		if($isUserBlocked || $isNewUser) {
+		if ($isUserBlocked || $isNewUser) {
 			$response->setTemplate('message.ejs', [
-				"header"=>"Canje rechazado",
-				"icon"=>"sentiment_very_dissatisfied",
+				"header" => "Canje rechazado",
+				"icon" => "sentiment_very_dissatisfied",
 				"text" => "Puede que su usuario esté bloqueado o que aún no tenga permisos para comprar recargas. Por favor consulte el soporte si tiene alguna duda.",
-				"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
+				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]]);
 			return;
 		}
 
@@ -145,10 +144,10 @@ class Service
 		} catch (Exception $e) {
 			echo $e->getMessage();
 			$response->setTemplate('message.ejs', [
-				"header"=>"Error inesperado",
-				"icon"=>"sentiment_very_dissatisfied",
+				"header" => "Error inesperado",
+				"icon" => "sentiment_very_dissatisfied",
 				"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
-				"button" => ["href"=>"RECARGAS", "caption"=>"Reintentar"]]);
+				"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]]);
 			return;
 		}
 
@@ -160,9 +159,9 @@ class Service
 
 		// possitive response
 		$response->setTemplate('message.ejs', [
-			"header"=>"Canje realizado",
-			"icon"=>"sentiment_very_satisfied",
+			"header" => "Canje realizado",
+			"icon" => "sentiment_very_satisfied",
 			"text" => "Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.",
-			"button" => ["href"=>"RECARGAS ANTERIORES", "caption"=>"Ver recargas"]]);
+			"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]]);
 	}
 }
