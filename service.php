@@ -148,33 +148,36 @@ class Service
 
 		$r = Connection::query("SELECT * FROM _recargas where security_code = '$security_code'");
 		if (isset($r[0]))
-			if ((int) $r[0]->person_id === $buyer->id)
-			{
-				// process the payment
-				try {
-					MoneyNew::buy($buyer->id, $code);
-				} catch (Exception $e) {
-					echo $e->getMessage();
-
-					// rollback
-					Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
-
-					$response->setTemplate('message.ejs', [
-							'header' => 'Error inesperado',
-							'icon'   => 'sentiment_very_dissatisfied',
-							'text'   => 'Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.',
-							'button' => ['href' => 'RECARGAS', 'caption' => 'Reintentar']]);
-					return;
-				}
+		{
+			// process the payment
+			try {
+				MoneyNew::buy($buyer->id, $code);
 
 				// possitive response
-				 $response->setTemplate('message.ejs', [
-						 'header' => 'Canje realizado',
-						 'icon'   => 'sentiment_very_satisfied',
-						 'text'   => 'Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.',
-						 'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']]);
+				$response->setTemplate('message.ejs', [
+					'header' => 'Canje realizado',
+					'icon'   => 'sentiment_very_satisfied',
+					'text'   => 'Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.',
+					'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']]);
+				return;
+
+			} catch (Exception $e) {
+				echo $e->getMessage();
+
+				// rollback
+				Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
+
+				$response->setTemplate('message.ejs', [
+						'header' => 'Error inesperado',
+						'icon'   => 'sentiment_very_dissatisfied',
+						'text'   => 'Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.',
+						'button' => ['href' => 'RECARGAS', 'caption' => 'Reintentar']]);
 				return;
 			}
+		}
+
+		// rollback
+		Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
 
 		 $response->setTemplate('message.ejs', [
 				 'header' => '¡Sigue intentando!',
