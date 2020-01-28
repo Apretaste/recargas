@@ -142,7 +142,7 @@ class Service
 		$isUserBlocked = Database::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone='{$buyer->cellphone}'")[0]->cnt > 0;
 
 		// check the buyer is at least one month old
-		$isNewUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date))->days < 60;
+		$isNewUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date ?? date("Y-m-d")))->days < 60;
 
 		// do not continue if a rule is broken
 		if ($isUserBlocked || $isNewUser) {
