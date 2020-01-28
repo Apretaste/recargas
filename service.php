@@ -6,6 +6,13 @@ use Apretaste\Response;
 
 class Service
 {
+	/**
+	 * Checkk cellphone number
+	 *
+	 * @param $number
+	 *
+	 * @return bool
+	 */
 	public function checkNumber(&$number){
 		$number = trim($number);
 		$number = str_replace(['-', ' ', '+', '(', ')'], '', $number);
@@ -27,7 +34,7 @@ class Service
 	public function _main(Request $request, Response &$response)
 	{
 		// check if the user has a cellphone
-		$phone = $request->person->cellphone ?? '';
+		$phone = $request->person->cellphone ??  ($request->person->phone ?? '');
 		if(!$this->checkNumber($phone)) {
 			$response->setTemplate("phone.ejs", ["phone" => $phone]);
 			return;
@@ -152,6 +159,11 @@ class Service
 			MoneyNew::buy($buyer->id, $code);
 		} catch (Exception $e) {
 			echo $e->getMessage();
+
+			// rollback
+			Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
+
+
 			$response->setTemplate('message.ejs', [
 				"header" => "Error inesperado",
 				"icon" => "sentiment_very_dissatisfied",
