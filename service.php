@@ -74,7 +74,7 @@ class Service
 		// create the content array
 		$content = [
 			"price" => $price,
-			"cellphone" => $request->person->cellphone,
+			"cellphone" => $request->person->cellphone ?? $request->person->phone,
 			"recharge" => $recharge,
 			"hasRechargeInLastMonth" => $lastMonth,
 			"phoneIsBlocked" => $phoneIsBlocked,
