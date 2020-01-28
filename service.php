@@ -18,7 +18,7 @@ class Service
 	public function _main(Request $request, Response &$response)
 	{
 		// check if the user has a cellphone
-		$phone = $request->person->cellphone;
+		$phone = $request->person->cellphone ?? '';
 		if (strlen($phone) != 10 || !substr($phone, 0, 2) === "53") {
 			$response->setTemplate("phone.ejs", ["phone" => $phone]);
 			return;
