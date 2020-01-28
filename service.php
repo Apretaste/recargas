@@ -154,23 +154,37 @@ class Service
 			return;
 		}
 
-		// process the payment
-		try {
-			MoneyNew::buy($buyer->id, $code);
-		} catch (Exception $e) {
-			echo $e->getMessage();
+		$security_code = uniqid('',true);
 
-			// rollback
-			Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
+		// add the recharge to the table
+		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
+		Connection::query("
+			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date, security_code)
+			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2, CURRENT_DATE, '$security_code')");
 
 
-			$response->setTemplate('message.ejs', [
-				"header" => "Error inesperado",
-				"icon" => "sentiment_very_dissatisfied",
-				"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
-				"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]]);
-			return;
+		$r = Connection::query("SELECT * FROM _recargas where security_code = '$security_code'");
+		if (isset($r[0]))
+		{
+			// process the payment
+			try {
+				MoneyNew::buy($buyer->id, $code);
+			} catch (Exception $e) {
+				echo $e->getMessage();
+
+				// rollback
+				Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
+
+
+				$response->setTemplate('message.ejs', [
+						"header" => "Error inesperado",
+						"icon" => "sentiment_very_dissatisfied",
+						"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
+						"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]]);
+				return;
+			}
 		}
+
 
 		// add the recharge to the table
 		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
