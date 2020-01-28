@@ -69,7 +69,7 @@ class Service
 		$phoneIsBlocked = !empty(Database::query("SELECT * FROM blocked_numbers WHERE cellphone='$phone'"));
 
 		// check if the user is a month old
-		$isOldUser = date_diff(new DateTime(), new DateTime($request->person->insertion_date))->days > 60;
+		$isOldUser = date_diff(new DateTime(), new DateTime($request->person->insertion_date ?? date("Y-m-d")))->days > 60;
 
 		// create the content array
 		$content = [
