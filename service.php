@@ -158,12 +158,12 @@ class Service
 
 		// add the recharge to the table
 		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
-		Connection::query("
+		Database::query("
 			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date, security_code)
 			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2, CURRENT_DATE, '$security_code')");
 
 
-		$r = Connection::query("SELECT * FROM _recargas where security_code = '$security_code'");
+		$r = Database::query("SELECT * FROM _recargas where security_code = '$security_code'");
 		if (isset($r[0]))
 		{
 			// process the payment
@@ -173,8 +173,7 @@ class Service
 				echo $e->getMessage();
 
 				// rollback
-				Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
-
+				Database::query("DELETE FROM _recargas where security_code = '$security_code'");
 
 				$response->setTemplate('message.ejs', [
 						"header" => "Error inesperado",
