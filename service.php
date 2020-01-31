@@ -169,7 +169,7 @@ class Service
 		{
 			// process the payment
 			try {
-				Money::buy($buyer->id, $code);
+				Money::purchase($buyer->id, $code);
 			} catch (Exception $e) {
 				echo $e->getMessage();
 
