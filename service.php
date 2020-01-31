@@ -1,5 +1,6 @@
 <?php
 
+use Apretaste\Money;
 use Framework\Database;
 use Apretaste\Request;
 use Apretaste\Response;
@@ -168,7 +169,7 @@ class Service
 		{
 			// process the payment
 			try {
-				MoneyNew::buy($buyer->id, $code);
+				Money::buy($buyer->id, $code);
 			} catch (Exception $e) {
 				echo $e->getMessage();
 
