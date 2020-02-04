@@ -1,48 +1,45 @@
 <div class="row">
-    <div class="col s12">
-        <ul class="tabs tabs-fixed-width">
-            <li class="tab"><a href="#" class="active">Recarga Diaria</a></li>
-            <li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS ANTERIORES'})">Últimos canjes</a>
-            </li>
-        </ul>
+	<div class="col s12">
+		<ul class="tabs tabs-fixed-width">
+			<li class="tab"><a href="#" class="active">Recarga Diaria</a></li>
+			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS ANTERIORES'})">Últimos canjes</a>
+			</li>
+		</ul>
 
-        <p>El primero que llegue podrá canjear una recarga Cubacel por §<%= price %> créditos. El contador se reinicia a
-            diario, a las 11:59:59 PM, por lo que si no la obtienes hoy, mañana habrá otra disponible. ¡Mucha
-            suerte!</p>
+		<p>El primero que llegue podrá canjear una recarga Cubacel por §<%= price %> créditos. El contador se reinicia a diario, a las 11:59:59 PM, por lo que si no la obtienes hoy, mañana habrá otra disponible. ¡Mucha suerte!</p>
 
-        <% if (recharge) { %>
-            <p>La recarga del día de hoy se la llevó</p>
-            <ul class="collection" style="margin: 0; border: none;">
-                <li class="collection-item avatar" style="min-height: auto;padding-top: 0;padding-bottom: 0;">
-                    <div class="person-avatar circle" face="<%= recharge.avatar %>" color="<%= colors[recharge.avatarColor] %>" size="42"></div>
-                    <span class="title"><b onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
-                    <p><%= formatTime(recharge.inserted) %></p>
-                </li>
-            </ul>
-            <p>No te desanimes. Mañana habra otra recarga esperando por tí.</p>
-        <% } else if(hasRechargeInLastMonth){ %>
-            <p>Usted ya realizó una recarga este mes, solo se permite una recarga mensual por usuario.</p>
-        <% } else if(phoneIsBlocked){ %>
-            <p>Su número ha sido bloqueado por ser parte de una recarga fradulenta en el pasado.</p>
-        <% } else if(!isOldUser){ %>
-            <p>Lo sentimos, para realizar una recarga su usuario debe tener más de dos meses registrado.</p>
-        <% } else { %>
-            <p>Usando el botón a continuación puede enviar una recarga al número <b><%= cellphone %></b>. Cambie su
-                teléfono desde el perfil.</p>
-            <a class="waves-effect waves-light btn" href="#!" onclick="openModal()">Canjear por §<%= price %></a>
-            <p><small>Las recargas pueden demorar hasta 3 días en acreditarse.</small></p>
-        <% } %>
-    </div>
+		<% if (recharge) { %>
+			<p>La recarga del día de hoy se la llevó</p>
+			<ul class="collection" style="margin: 0; border: none;">
+				<li class="collection-item avatar" style="min-height: auto;padding-top: 0;padding-bottom: 0;">
+					<div class="person-avatar circle" face="<%= recharge.avatar %>" color="<%= colors[recharge.avatarColor] %>" size="42"></div>
+					<span class="title"><b onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
+					<p><%= formatTime(recharge.inserted) %></p>
+				</li>
+			</ul>
+			<p>No te desanimes. Mañana habra otra recarga esperando por tí.</p>
+		<% } else if(hasRechargeInLastMonth){ %>
+			<p>Usted ya realizó una recarga este mes, solo se permite una recarga mensual por usuario.</p>
+		<% } else if(phoneIsBlocked){ %>
+			<p>Su número ha sido bloqueado por ser parte de una recarga fradulenta en el pasado.</p>
+		<% } else if(!isOldUser){ %>
+			<p>Lo sentimos, para realizar una recarga su usuario debe tener más de dos meses registrado.</p>
+		<% } else { %>
+			<p>Usando el botón a continuación puede enviar una recarga al número <b><%= cellphone %></b>. Cambie su teléfono desde el perfil.</p>
+			<a class="waves-effect waves-light btn" href="#!" onclick="openModal()">Canjear por §<%= price %></a>
+			<p><small>Las recargas pueden demorar hasta 3 días en acreditarse.</small></p>
+		<% } %>
+	</div>
 </div>
 
 <!-- MODALS -->
 
 <div id="modal" class="modal">
-    <div class="modal-content">
-        <p>¿Esta seguro de realizar este canje? Esta acción es irrevocable.</p>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-light btn-flat">Cancelar</a>
-        <a onclick="pay()" class="modal-close waves-effect waves-green btn-flat green-text">Canjear</a>
-    </div>
+	<div class="modal-content">
+		<p>¿Esta seguro de realizar este canje? Esta acción es irrevocable.</p>
+	</div>
+	<div class="modal-footer">
+		<a href="#!" class="modal-close waves-effect waves-light btn-flat">Cancelar</a>
+		<a onclick="pay()" class="modal-close waves-effect waves-green btn-flat green-text">Canjear</a>
+	</div>
 </div>

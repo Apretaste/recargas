@@ -8,28 +8,10 @@ use Apretaste\Response;
 class Service
 {
 	/**
-	 * Checkk cellphone number
-	 *
-	 * @param $number
-	 *
-	 * @return bool
-	 */
-	public function checkNumber(&$number){
-		$number = trim($number);
-		$number = str_replace(['-', ' ', '+', '(', ')'], '', $number);
-		if (strlen($number) === 8) $number = "53$number";
-		if (strlen($number) !== 10) return false;
-		if (strpos($number, '53')!==0) return false;
-		return true;
-	}
-
-	/**
 	 * Main
 	 *
 	 * @param Request $request
 	 * @param Response $response
-	 *
-	 * @throws \Exception
 	 * @author salvipascual
 	 */
 	public function _main(Request $request, Response &$response)
@@ -37,8 +19,7 @@ class Service
 		// check if the user has a cellphone
 		$phone = $request->person->cellphone ??  ($request->person->phone ?? '');
 		if(!$this->checkNumber($phone)) {
-			$response->setTemplate("phone.ejs", ["phone" => $phone]);
-			return;
+			return $response->setTemplate("phone.ejs", ["phone" => $phone]);
 		}
 
 		// get the price for the recharge for today
@@ -91,8 +72,6 @@ class Service
 	 *
 	 * @param Request $request
 	 * @param Response $response
-	 *
-	 * @throws \Framework\Alert
 	 * @author salvipascual
 	 */
 	public function _anteriores(Request $request, Response &$response)
@@ -115,10 +94,8 @@ class Service
 	/**
 	 * Pay for an item and add the items to the database
 	 *
-	 * @param \Apretaste\Request $request
-	 * @param \Apretaste\Response $response
-	 *
-	 * @throws \Framework\Alert
+	 * @param Request $request
+	 * @param Response $response
 	 */
 	public function _pay(Request $request, Response &$response)
 	{
@@ -131,12 +108,12 @@ class Service
 
 		// do not continue if recharges max was reached today
 		if ($isMaxReached) {
-			$response->setTemplate('message.ejs', [
+			return $response->setTemplate('message.ejs', [
 				"header" => "¡Sigue intentando!",
 				"icon" => "sentiment_very_dissatisfied",
 				"text" => "Lamentablemente, alguien más fue un poco más rápido que tú y canjeo la recarga del día. No te desanimes, mañana tendrás otra oportunidad para tratar de canjearla.",
-				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]]);
-			return;
+				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
+			]);
 		}
 
 		// do not continue if the phone number is blocked for scams
@@ -147,12 +124,12 @@ class Service
 
 		// do not continue if a rule is broken
 		if ($isUserBlocked || $isNewUser) {
-			$response->setTemplate('message.ejs', [
+			return $response->setTemplate('message.ejs', [
 				"header" => "Canje rechazado",
 				"icon" => "sentiment_very_dissatisfied",
 				"text" => "Puede que su usuario esté bloqueado o que aún no tenga permisos para comprar recargas. Por favor consulte el soporte si tiene alguna duda.",
-				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]]);
-			return;
+				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
+			]);
 		}
 
 		$security_code = uniqid('',true);
@@ -163,28 +140,30 @@ class Service
 			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date, security_code)
 			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2, CURRENT_DATE, '$security_code')");
 
+		// check if there is a security code
+		$res = Database::query("SELECT * FROM _recargas where security_code = '$security_code'");
 
-		$r = Database::query("SELECT * FROM _recargas where security_code = '$security_code'");
-		if (isset($r[0]))
-		{
-			// process the payment
+		// process the payment
+		if (isset($res[0])) {
 			try {
 				Money::purchase($buyer->id, $code);
 			} catch (Exception $e) {
-				echo $e->getMessage();
+				// show user alert
+				$alert = new Alert($e->getCode(), $e->getMessage());
+				$alert->post();
 
-				// rollback
+				// rollback the transaction
 				Database::query("DELETE FROM _recargas where security_code = '$security_code'");
 
-				$response->setTemplate('message.ejs', [
-						"header" => "Error inesperado",
-						"icon" => "sentiment_very_dissatisfied",
-						"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
-						"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]]);
-				return;
+				// show error message to the user
+				return $response->setTemplate('message.ejs', [
+					"header" => "Error inesperado",
+					"icon" => "sentiment_very_dissatisfied",
+					"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
+					"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]
+				]);
 			}
 		}
-
 
 		// add the recharge to the table
 		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
@@ -197,6 +176,23 @@ class Service
 			"header" => "Canje realizado",
 			"icon" => "sentiment_very_satisfied",
 			"text" => "Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.",
-			"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]]);
+			"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
+		]);
+	}
+
+	/**
+	 * Check and format a cellphone number 
+	 *
+	 * @param String $number
+	 * @return Bool
+	 */
+	private function checkNumber(&$number)
+	{
+		$number = trim($number);
+		$number = str_replace(['-', ' ', '+', '(', ')'], '', $number);
+		if (strlen($number) === 8) $number = "53$number";
+		if (strlen($number) !== 10) return false;
+		if (strpos($number, '53')!==0) return false;
+		return true;
 	}
 }
