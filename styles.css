@@ -1,3 +1,7 @@
 .bottom-space {
 	margin-bottom: 60px;
 }
+
+.avatar .circle{
+	background-size: contain;
+}

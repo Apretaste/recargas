@@ -1,66 +1,69 @@
-$(document).ready(function(){
+$(document).ready(function () {
 	$('.tabs').tabs();
 	$('.modal').modal();
 });
 
 var colors = {
-	'Azul': '#99F9FF',
-	'Verde': '#9ADB05',
-	'Rojo': '#FF415B',
-	'Morado': '#58235E',
-	'Naranja': '#F38200',
-	'Amarillo': '#FFE600'
+	'azul': '#99F9FF',
+	'verde': '#9ADB05',
+	'rojo': '#FF415B',
+	'morado': '#58235E',
+	'naranja': '#F38200',
+	'amarillo': '#FFE600'
 };
+
 var avatars = {
-	'Rockera': 'F',
-	'Tablista': 'F',
-	'Rapero': 'M',
-	'Guapo': 'M',
-	'Bandido': 'M',
-	'Encapuchado': 'M',
-	'Rapear': 'M',
-	'Inconformista': 'M',
-	'Coqueta': 'F',
-	'Punk': 'M',
-	'Metalero': 'M',
-	'Rudo': 'M',
-	'Señor': 'M',
-	'Nerd': 'M',
-	'Hombre': 'M',
-	'Cresta': 'M',
-	'Emo': 'M',
-	'Fabulosa': 'F',
-	'Mago': 'M',
-	'Jefe': 'M',
-	'Sensei': 'M',
-	'Rubia': 'F',
-	'Dulce': 'F',
-	'Belleza': 'F',
-	'Músico': 'M',
-	'Rap': 'M',
-	'Artista': 'M',
-	'Fuerte': 'M',
-	'Punkie': 'M',
-	'Vaquera': 'F',
-	'Modelo': 'F',
-	'Independiente': 'F',
-	'Extraña': 'F',
-	'Hippie': 'M',
-	'Chica Emo': 'F',
-	'Jugadora': 'F',
-	'Sencilla': 'F',
-	'Geek': 'F',
-	'Deportiva': 'F',
-	'Moderna': 'F',
-	'Surfista': 'M',
-	'Señorita': 'F',
-	'Rock': 'F',
-	'Genia': 'F',
-	'Gótica': 'F',
-	'Sencillo': 'M',
-	'Hawaiano': 'M',
-	'Ganadero': 'M',
-	'Gótico': 'M'
+	apretin: {caption: "Apretín", gender: 'M'},
+	apretina: {caption: "Apretina", gender: 'F'},
+	artista: {caption: "Artista", gender: 'M'},
+	bandido: {caption: "Bandido", gender: 'M'},
+	belleza: {caption: "Belleza", gender: 'F'},
+	chica: {caption: "Chica", gender: 'F'},
+	coqueta: {caption: "Coqueta", gender: 'F'},
+	cresta: {caption: "Cresta", gender: 'M'},
+	deportiva: {caption: "Deportiva", gender: 'F'},
+	dulce: {caption: "Dulce", gender: 'F'},
+	emo: {caption: "Emo", gender: 'M'},
+	oculto: {caption: "Oculto", gender: 'M'},
+	extranna: {caption: "Extraña", gender: 'F'},
+	fabulosa: {caption: "Fabulosa", gender: 'F'},
+	fuerte: {caption: "Fuerte", gender: 'M'},
+	ganadero: {caption: "Ganadero", gender: 'M'},
+	geek: {caption: "Geek", gender: 'F'},
+	genia: {caption: "Genia", gender: 'F'},
+	gotica: {caption: "Gótica", gender: 'F'},
+	gotico: {caption: "Gótico", gender: 'M'},
+	guapo: {caption: "Guapo", gender: 'M'},
+	hawaiano: {caption: "Hawaiano", gender: 'M'},
+	hippie: {caption: "Hippie", gender: 'M'},
+	hombre: {caption: "Hombre", gender: 'M'},
+	atengo: {caption: "Atengo", gender: 'M'},
+	libre: {caption: "Libre", gender: 'F'},
+	jefe: {caption: "Jefe", gender: 'M'},
+	jugadora: {caption: "Jugadora", gender: 'F'},
+	mago: {caption: "Mago", gender: 'M'},
+	metalero: {caption: "Metalero", gender: 'M'},
+	modelo: {caption: "Modelo", gender: 'F'},
+	moderna: {caption: "Moderna", gender: 'F'},
+	musico: {caption: "Músico", gender: 'M'},
+	nerd: {caption: "Nerd", gender: 'M'},
+	punk: {caption: "Punk", gender: 'M'},
+	punkie: {caption: "Punkie", gender: 'M'},
+	rap: {caption: "Rap", gender: 'M'},
+	rapear: {caption: "Rapear", gender: 'M'},
+	rapero: {caption: "Rapero", gender: 'M'},
+	rock: {caption: "Rock", gender: 'M'},
+	rockera: {caption: "Rockera", gender: 'F'},
+	rubia: {caption: "Rubia", gender: 'F'},
+	rudo: {caption: "Rudo", gender: 'M'},
+	sencilla: {caption: "Sencilla", gender: 'F'},
+	sencillo: {caption: "Sencillo", gender: 'M'},
+	sennor: {caption: "Señor", gender: 'M'},
+	sennorita: {caption: "Señorita", gender: 'F'},
+	sensei: {caption: "Sensei", gender: 'M'},
+	surfista: {caption: "Surfista", gender: 'M'},
+	tablista: {caption: "Tablista", gender: 'F'},
+	vaquera: {caption: "Vaquera", gender: 'F'}
 };
 
 function pad(n, width, z) {
@@ -69,12 +72,8 @@ function pad(n, width, z) {
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-function getAvatar(avatar, serviceImgPath, size) {
-	var index = Object.keys(avatars).indexOf(avatar);
-	var fullsize = size * 7;
-	var x = index % 7 * size;
-	var y = Math.floor(index / 7) * size;
-	return "background-image: url(" + serviceImgPath + "/avatars.png);" + "background-size: " + fullsize + "px " + fullsize + "px;" + "background-position: -" + x + "px -" + y + "px;";
+function getAvatar(avatar, serviceImgPath) {
+	return "background-image: url(" + serviceImgPath + "/" + avatar + ".png);";
 }
 
 // change the phone number

@@ -12,7 +12,7 @@
             <% recharges.forEach(function(recharge) { %>
                 <li class="collection-item avatar" style="min-height: auto">
                     <div class="circle"
-                         style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images", 42) %> background-color: <%= colors[recharge.avatarColor] %>;">
+                         style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images") %> background-color: <%= colors[recharge.avatarColor] %>;">
                     </div>
 
                     <span class="title"><b
