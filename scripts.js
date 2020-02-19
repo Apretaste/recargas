@@ -3,10 +3,20 @@ $(document).ready(function(){
 	$('.modal').modal();
 });
 
-function pad(n, width, z) {
-	z = z || '0';
-	n = n + '';
-	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+// shorten a name to fit in the box
+function short(username) {
+	if (username.length > 9) {
+		return username.substring(0, 6) + '...';
+	}
+	return username;
+}
+
+// open the person's profile
+function profile(username) {
+	apretaste.send({
+		'command': 'PERFIL',
+		'data': {'username': username}
+	});
 }
 
 // change the phone number
@@ -16,42 +26,19 @@ function sendPhone() {
 
 	// check the coupon is not empty
 	if (cell.length !== 10 || !cell.startsWith("53")) {
-		M.toast({html: 'Su número de celular debe empezar con 53 y tener una longitus de 10 dígitos'});
+		M.toast({html: 'Su número de celular debe empezar con 53 y tener 10 dígitos'});
 		return false;
 	}
 
+	// submit the number
 	apretaste.send({
 		"command": "PERFIL UPDATE",
-		"data": {"cellphone": cell},
-		"redirect": false,
-		"callback": {"name": "callbackReloadHome", "data": ""}
+		"data": {"cellphone": cell}
 	});
 }
 
-// callback to go Home
-function callbackReloadHome() {
-	apretaste.send({"command": "RECARGAS"});
-}
-
-// formats a time
-function formatTime(dateStr) {
-	var date = new Date(dateStr);
-	var hour = (date.getHours() < 12) ? date.getHours() : date.getHours() - 12;
-	var minutes = pad(date.getMinutes(), 2);
-	var amOrPm = (date.getHours() < 12) ? "am" : "pm";
-	return hour + ':' + minutes + amOrPm;
-}
 
 // show the modal popup
-function openModal(code) {
-	$('#modal').modal('open');
-}
-
-// create a new purchase
-function pay() {
-	apretaste.send({
-		command: "RECARGAS PAY",
-		data: {'code': 'CUBACEL_10'},
-		redirect: true
-	});
-}
+// function openModal(code) {
+// 	$('#modal').modal('open');
+// }

@@ -1,20 +1,26 @@
 <div class="row">
 	<div class="col s12">
 		<ul class="tabs tabs-fixed-width">
-			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS'})">Recarga Diaria</a></li>
-			<li class="tab"><a href="#" class="active">Últimos canjes</a></li>
-		</ul>
-
-		<p>Felicitamos a todos nuestros usuarios que han conseguido el crédito necesario y canjeado una recarga. Para que todos los conozcan, listamos los últimos veinte a continuación</p>
-
-		<ul class="collection">
-			<% recharges.forEach(function(recharge) { %>
-				<li class="collection-item avatar" style="min-height: auto">
-					<div class="person-avatar circle" face="<%= recharge.avatar %>" color="<%= recharge.avatarColor %>" size="42"></div>
-					<span class="title"><b onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
-					<p><%= recharge.inserted %></p>
-				</li>
-			<% }) %>
+			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS'})">Recargas</a></li>
+			<li class="tab"><a href="#" class="active">Ganadores</a></li>
+			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS AYUDA'})">Ayuda</a></li>
 		</ul>
 	</div>
+</div>
+
+<div class="row">
+	<% recharges.forEach(function(item) { %>
+		<% var today = parseInt(item.today) ? 'today' : ''; %>
+		<div class="col s4 m2">
+			<div class="card center-align <%= today %>" onclick="profile('<%= item.username %>')">
+				<div class="content">
+					<div class="person-avatar circle" face="<%= item.avatar %>" color="<%= item.avatarColor %>" size="40" online="1"></div>
+					<div class="<%= item.gender %>">@<%= short(item.username) %></div>
+				</div>
+				<div class="action grey lighten-2 green-text">
+					<%= item.inserted %>
+				</div>
+			</div>
+		</div>
+	<% }) %>
 </div>
