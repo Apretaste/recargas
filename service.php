@@ -8,6 +8,8 @@ use Apretaste\Response;
 
 class Service
 {
+	private $inventoryCode = 'CUBACEL_10';
+
 	/**
 	 * Display the steps to buy recharges
 	 *
@@ -18,17 +20,16 @@ class Service
 	public function _main(Request $request, Response $response)
 	{
 		// get the price for the recharge
-		$product = Database::queryCache("SELECT price FROM inventory WHERE code = 'CUBACEL_10'", Database::CACHE_DAY);
-		$price = $product[0]->price;
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
 
 		// get the recharges calendar for today
-		$schedule = Database::query("SELECT open FROM _recargas_schedule WHERE open >= CURRENT_DATE");
+		$schedule = Database::query("SELECT scheduled FROM _recharges WHERE scheduled >= CURRENT_DATE ORDER BY scheduled ASC");
 
 		// create the content array
 		$content = [
 			"phone" => $request->person->phone,
 			"credit" => $request->person->credit,
-			"price" => $price,
+			"price" => $rechargePrice,
 			"recharges" => $schedule
 		];
 
@@ -46,15 +47,27 @@ class Service
 	public function _anteriores(Request $request, Response $response)
 	{
 		// show a list of previous recharges
+		// @TODO replace to the query below when the old Core dies
+			// SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
+			// FROM _recharges A
+			// JOIN person B 
+			// ON A.person_id = B.id
+			// ORDER BY bought DESC
+			// LIMIT 20
 		$recharges = Database::query("
-			SELECT 
-				B.username, B.avatar, B.avatarColor, B.gender,
-				DATE_FORMAT(A.inserted, '%e/%c/%Y %r') AS inserted,
-				(A.inserted >= CURRENT_DATE) AS today
-			FROM _recargas A
-			JOIN person B 
-			ON A.person_id = B.id
-			ORDER BY A.inserted DESC
+			SELECT * 
+			FROM (
+				SELECT B.username, B.avatar, B.avatarColor, B.gender, A.inserted AS bought
+				FROM _recargas A
+				JOIN person B 
+				ON A.person_id = B.id
+				UNION 
+				SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
+				FROM _recharges A
+				JOIN person B 
+				ON A.person_id = B.id
+			) A
+			ORDER BY bought DESC
 			LIMIT 20");
 
 		// set the cache till the end of the day and send data to the view
@@ -83,8 +96,11 @@ class Service
 	 */
 	public function _ayuda(Request $request, Response $response)
 	{
+		// get the price for the recharge
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
+
 		$response->setCache('year');
-		$response->setTemplate("help.ejs");
+		$response->setTemplate("help.ejs", ["price"=>$rechargePrice]);
 	}
 
 	/**
@@ -95,99 +111,103 @@ class Service
 	 */
 	public function _pay(Request $request, Response $response)
 	{
-		// get buyer and code
-		$buyer = $request->person;
-
-		// get the next rechgarge to claim
-		$nextRechargeScheduled = Database::query("
-			SELECT open 
-			FROM _recargas_schedule 
-			WHERE open >= CURRENT_TIMESTAMP 
-			ORDER BY open 
-			LIMIT 1");
-
-		// stop if no rechgarges were scheduled
-		if (empty($nextRechargeScheduled)) {
-			return $response->setTemplate('message.ejs', [
-				"header" => "No hay recargas",
-				"icon" => "sentiment_very_dissatisfied",
-				"text" => "Por ahora no tenemos recargas disponibles para canjear. Es posible que el tiempo de expiración se halla alcanzado. Intente nuevamente más tarde.",
-				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
-			]);
-		}
-
-print_r($nextRechargeScheduled); exit;
-
-		// check if a recharge was already done today
-		$isMaxReached = Database::query("
-			SELECT COUNT(id) AS cnt 
-			FROM _recargas 
-			WHERE inserted >= CURRENT_DATE")[0]->cnt > 0;
-
-		// do not continue if recharges max was reached today
-		if ($isMaxReached) {
-			return $response->setTemplate('message.ejs', [
-				"header" => "¡Sigue intentando!",
-				"icon" => "sentiment_very_dissatisfied",
-				"text" => "Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga del día. No te desanimes, mañana tendrás otra oportunidad para tratar de canjearla.",
-				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
-			]);
+		// check how many recharges are available
+		$rechargeAvailableCount = Database::query("SELECT COUNT(id) AS cnt  FROM _recharges  WHERE scheduled >= CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")[0]->cnt;
+		if ($rechargeAvailableCount == 0) {
+			return $this->displayError("Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga disponible. No te desanimes, espera a la hora de la próxima recarga y sé más rápido esta vez.", $response);
 		}
 
 		// check if the phone number is blocked for scams
-		$isPhoneBlocked = Database::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone = '{$buyer->phone}'")[0]->cnt > 0;
+		$isPhoneBlocked = Database::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone = '{$request->person->phone}'")[0]->cnt > 0;
+		if ($isPhoneBlocked) {
+			return $this->displayError("Su usuario esté bloqueado y no tiene permisos para recargar. Por favor consulte el soporte si tiene alguna duda.", $response);
+		}
 
-		// check the buyer is Topacio or higer
-		$isLevelTopacio = $request->person->levelCode == Level::TOPACIO;
+		// check if user is not yet level Topacio
+		if ($request->person->levelCode == Level::TOPACIO) {
+			return $this->displayError("Su usuario aún no sea nivel Topacio o superior. Siga usando la app para ganar experiencia y subir de nivel.", $response);
+		}
 
-		// do not continue if a rule is broken
-		if ($isPhoneBlocked || $isLevelTopacio) {
+		// check if your phone number is valid 
+		if (!$this->checkNumber($request->person->phone)) {
+			return $this->displayError('El número que insertastes "{$request->person->phone}" no parece un teléfono válido de Cuba. Por favor modifica tu teléfono e intenta nuevamente.', $response);
+		}
+
+		// check if user has enough credit
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
+		if ($request->person->credit < $rechargePrice) {
+			return $this->displayError("Usted no tiene suficiente crédito para conseguir este recarga. Siga usando la app y ganando crédito e intente nuevamente.", $response);
+		}
+
+		// prepare a unique ID to ensure only one recharge is made
+		$securityCode = uniqid('', true);
+
+		// take the first unused slot and place the recharge
+		Database::query("
+			UPDATE _recharges SET
+				person_id = {$request->person->id},
+				product_code = '{$this->inventoryCode}',
+				phone = '{$request->person->phone}',
+				security_code = '$securityCode',
+				bought = CURRENT_TIMESTAMP
+			WHERE scheduled >= CURRENT_DATE 
+			AND scheduled < CURRENT_TIMESTAMP 
+			AND person_id IS NULL
+			ORDER BY scheduled ASC
+			LIMIT 1");
+
+		// check if was me who won the recharge
+		$userWon = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")[0]->cnt > 0;
+
+		// if I was the one who got the recharge, process the payment
+		if ($userWon) {
+			try {
+				Money::purchase($request->person->id, $this->inventoryCode);
+			} catch (Exception $e) {
+				// let the developers know what went wrong
+				$alert = new Alert($e->getCode(), $e->getMessage());
+				$alert->post();
+	
+				// rollback the transaction and display error message
+				goto error_message;
+			}
+
+			// possitive response
 			return $response->setTemplate('message.ejs', [
-				"header" => "Canje rechazado",
-				"icon" => "sentiment_very_dissatisfied",
-				"text" => "Puede que su usuario esté bloqueado o que aún no sea nivel Topacio o superior. Por favor consulte el soporte si tiene alguna duda.",
+				"header" => "Canje realizado",
+				"icon" => "sentiment_very_satisfied",
+				"text" => "Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.",
 				"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
 			]);
 		}
 
-		$securityCode = uniqid('',true);
+		// in case there is an error...
+		error_message:
 
-		// add the recharge to the table
+		// rollback the transaction
 		Database::query("
-			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, securityCode)
-			VALUES ({$buyer->id}, 'CUBACEL_10', '{$buyer->cellphone}', '$securityCode')");
+			UPDATE _recharges 
+			SET person_id=NULL, product_code=NULL, phone=NULL, security_code=NULL, bought=NULL
+			WHERE security_code = '$securityCode'");
 
-		// check if there is a security code
-		$res = Database::query("SELECT * FROM _recargas WHERE securityCode = '$securityCode'");
+		// show error message for unknown issues
+		return $this->displayError("Hemos encontrado un error inesperado. Ya avisamos al equipo técnico. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.", $response);
+	}
 
-		// process the payment
-		if (isset($res[0])) {
-			try {
-				Money::purchase($buyer->id, 'CUBACEL_10');
-			} catch (Exception $e) {
-				// show user alert
-				$alert = new Alert($e->getCode(), $e->getMessage());
-				$alert->post();
-
-				// rollback the transaction
-				Database::query("DELETE FROM _recargas WHERE securityCode = '$securityCode'");
-
-				// show error message to the user
-				return $response->setTemplate('message.ejs', [
-					"header" => "Error inesperado",
-					"icon" => "sentiment_very_dissatisfied",
-					"text" => "Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.",
-					"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]
-				]);
-			}
-		}
-
-		// possitive response
-		$response->setTemplate('message.ejs', [
-			"header" => "Canje realizado",
-			"icon" => "sentiment_very_satisfied",
-			"text" => "Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.",
-			"button" => ["href" => "RECARGAS ANTERIORES", "caption" => "Ver recargas"]
+	/**
+	 * Return an error message to be displayed
+	 *
+	 * @param String $errorMessage 
+	 * @param Response $response
+	 * @return Response
+	 */
+	private function displayError(String $errorMessage, Response $response): Response
+	{
+		return $response->setTemplate('message.ejs', [
+			"header" => "Canje rechazado",
+			"icon" => "sentiment_very_dissatisfied",
+			"text" => $errorMessage,
+			"button" => ["href" => "RECARGAS", "caption" => "Reintentar"]
 		]);
 	}
 
@@ -197,7 +217,7 @@ print_r($nextRechargeScheduled); exit;
 	 * @param String $number
 	 * @return Bool
 	 */
-	private function checkNumber(&$number)
+	private function checkNumber($number)
 	{
 		$number = trim(str_replace(['-', ' ', '+', '(', ')'], '', $number));
 		if (strlen($number) === 8) $number = "53$number";

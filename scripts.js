@@ -36,9 +36,3 @@ function sendPhone() {
 		"data": {"cellphone": cell}
 	});
 }
-
-
-// show the modal popup
-// function openModal(code) {
-// 	$('#modal').modal('open');
-// }

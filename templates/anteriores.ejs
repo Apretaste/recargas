@@ -10,7 +10,7 @@
 
 <div class="row">
 	<% recharges.forEach(function(item) { %>
-		<% var today = parseInt(item.today) ? 'today' : ''; %>
+		<% var today = moment(item.bought).startOf('day').isSame(moment().startOf('day')) ? 'today' : ''; %>
 		<div class="col s4 m2">
 			<div class="card center-align <%= today %>" onclick="profile('<%= item.username %>')">
 				<div class="content">
@@ -18,7 +18,9 @@
 					<div class="<%= item.gender %>">@<%= short(item.username) %></div>
 				</div>
 				<div class="action grey lighten-2 green-text">
-					<%= item.inserted %>
+					<%= moment(item.bought).format("DD/MM/YYYY") %>
+					<br>
+					<%= moment(item.bought).format("h:mm:ss A") %>
 				</div>
 			</div>
 		</div>

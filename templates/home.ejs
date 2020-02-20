@@ -44,17 +44,15 @@
 				<% } else if(recharges.length == 0) { %>
 					<p>Calculando recargas ...</p>
 				<% } else { %>
-					<p>
-						Próximas recargas:
-						<ul class="times browser-default">
-							<% recharges.forEach(function(item) { %>
-								<% var crossed = moment(item.open).isBefore(moment()) ? 'crossed' : '' %>
-								<li class="<%= crossed %>">
-									<%= moment(item.open).format('hh:mm:ss A') %>
-								</li>
-							<% }) %>
-						</ul>
-					</p>
+					<p>Próximas recargas:</p>
+					<ul class="times browser-default">
+						<% recharges.forEach(function(item) { %>
+							<% var crossed = moment(item.scheduled).isBefore(moment()) ? 'crossed' : '' %>
+							<li class="<%= crossed %>">
+								<%= moment(item.scheduled).format('hh:mm:ss A') %>
+							</li>
+						<% }) %>
+					</ul>
 					<a href="#!" class="secondary-content" onclick="apretaste.send({command:'RECARGAS PAY'})">
 						<i class="material-icons">arrow_forward</i>
 					</a>
