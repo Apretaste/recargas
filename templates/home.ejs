@@ -11,7 +11,7 @@
 <%
 	var phoneDisabled = phone ? 'disabled' : '';
 	var phoneMessage = phone ? '+'+phone : 'Agregue el número a recargar';
-	var creditDisabled = credit >= price ? 'disabled' : '';
+	var creditDisabled = Number(credit) >= Number(price) ? 'disabled' : '';
 	var rechargeDisabled = (phoneDisabled == 'disabled' && creditDisabled == 'disabled')  ? '' : 'disabled';
 %>
 
