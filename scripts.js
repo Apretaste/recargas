@@ -1,6 +1,5 @@
 $(document).ready(function(){
 	$('.tabs').tabs();
-	$('.modal').modal();
 });
 
 // shorten a name to fit in the box
