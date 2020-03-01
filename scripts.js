@@ -32,6 +32,21 @@ function sendPhone() {
 	// submit the number
 	apretaste.send({
 		"command": "PERFIL UPDATE",
-		"data": {"cellphone": cell}
+		"data": {"cellphone": cell},
+		'redirect': false,
+		'callback': {
+			'name': 'updateRedirect',
+			'data': cell
+		}
+	});
+}
+
+function updateRedirect(){
+	showToast('Celular actualizado');
+}
+
+function showToast(text) {
+	M.toast({
+		html: text
 	});
 }
