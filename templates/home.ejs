@@ -47,10 +47,7 @@
 					<p>Próximas recargas:</p>
 					<ul class="times browser-default">
 						<% recharges.forEach(function(item) { %>
-							<% var crossed = moment(item.scheduled).isBefore(moment()) ? 'crossed' : '' %>
-							<li class="<%= crossed %>">
-								<%= moment(item.scheduled).format('hh:mm:ss A') %>
-							</li>
+							<li><%= moment(item.scheduled).format('hh:mm:ss A') %></li>
 						<% }) %>
 					</ul>
 					<a href="#!" class="secondary-content" onclick="apretaste.send({command:'RECARGAS PAY'})">
