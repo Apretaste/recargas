@@ -1,5 +1,6 @@
 <?php
 
+use Framework\Alert;
 use Framework\Database;
 use Apretaste\Money;
 use Apretaste\Level;
