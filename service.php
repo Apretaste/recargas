@@ -66,6 +66,7 @@ class Service
 				FROM _recargas A
 				JOIN person B 
 				ON A.person_id = B.id
+				WHERE not exists (select * from _recharges where A.security_code = _recharges.security_code)
 				UNION 
 				SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
 				FROM _recharges A
@@ -161,8 +162,21 @@ class Service
 			ORDER BY scheduled ASC
 			LIMIT 1");
 
+		// TODO: temporal, remove after kill core2
+		Database::query("INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date, security_code)
+			VALUES ({$request->person->id}, '{$this->inventoryCode}}', '{$request->person->phone}', 2, CURRENT_DATE, '$securityCode')");
+
 		// check if was me who won the recharge
+
+		// TODO: TEMPORAL*
+		/* USE THIS ATER KILL CORE2
 		$userWon = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")[0]->cnt > 0;
+		*/
+		$userWon = Database::query("
+			SELECT sum(cnt) as cnt FROM (
+				SELECT COUNT(id) AS cnt FROM _recargas WHERE security_code = '$securityCode'
+			UNION 
+				SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode')")[0]->cnt > 1;
 
 		// if I was the one who got the recharge, process the payment
 		if ($userWon) {
