@@ -14,10 +14,8 @@ class Service
 	/**
 	 * Display the steps to buy recharges
 	 *
-	 * @param  Request  $request
-	 * @param  Response  $response
-	 *
-	 * @throws \Framework\Alert
+	 * @param  Request $request
+	 * @param  Response $response
 	 * @author salvipascual
 	 */
 	public function _main(Request $request, Response $response)
@@ -43,38 +41,20 @@ class Service
 	/**
 	 * Check the last 20 previous recharges
 	 *
-	 * @param  Request  $request
-	 * @param  Response  $response
-	 *
-	 * @throws \Framework\Alert
+	 * @param Request $request
+	 * @param Response $response
 	 * @author salvipascual
 	 */
 	public function _anteriores(Request $request, Response $response)
 	{
 		// show a list of previous recharges
-		// @TODO replace to the query below when the old Core dies
-			// SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
-			// FROM _recharges A
-			// JOIN person B 
-			// ON A.person_id = B.id
-			// ORDER BY bought DESC
-			// LIMIT 20
-		$recharges = Database::query('
-			SELECT * 
-			FROM (
-				SELECT B.username, B.avatar, B.avatarColor, B.gender, A.inserted AS bought
-				FROM _recargas A
-				JOIN person B 
-				ON A.person_id = B.id
-				WHERE not exists (select * from _recharges where A.security_code = _recharges.security_code)
-				UNION 
-				SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
-				FROM _recharges A
-				JOIN person B 
-				ON A.person_id = B.id
-			) A
+		$recharges = Database::query("
+			SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
+			FROM _recharges A
+			JOIN person B 
+			ON A.person_id = B.id
 			ORDER BY bought DESC
-			LIMIT 20');
+			LIMIT 20");
 
 		// set the cache till the end of the day and send data to the view
 		$response->setCache('hour');
@@ -117,12 +97,6 @@ class Service
 	 */
 	public function _pay(Request $request, Response $response)
 	{
-		// check how many recharges are available
-		$rechargeAvailableCount = Database::query('SELECT COUNT(id) AS cnt  FROM _recharges  WHERE scheduled >= CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL')[0]->cnt;
-		if ($rechargeAvailableCount == 0) {
-			return $this->displayError('Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga disponible. No te desanimes, espera a la hora de la próxima recarga y sé más rápido esta vez.', $response);
-		}
-
 		// check if the phone number is blocked for scams
 		$isPhoneBlocked = Database::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone = '{$request->person->phone}'")[0]->cnt > 0;
 		if ($isPhoneBlocked) {
@@ -145,72 +119,67 @@ class Service
 			return $this->displayError('Usted no tiene suficiente crédito para conseguir este recarga. Siga usando la app y ganando crédito e intente nuevamente.', $response);
 		}
 
-		// prepare a unique ID to ensure only one recharge is made
-		$securityCode = uniqid('', true);
+		// POSITIVE check if there is a recharge available for the user
+		$isARechargeAvailable = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE scheduled >= CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")[0]->cnt > 0;
+		if($isARechargeAvailable) {
+			// prepare a unique ID to ensure only one recharge is made
+			$securityCode = uniqid('', true);
 
-		// take the first unused slot and place the recharge
-		Database::query("
-			UPDATE _recharges SET
-				person_id = {$request->person->id},
-				product_code = '{$this->inventoryCode}',
-				phone = '{$request->person->phone}',
-				security_code = '$securityCode',
-				bought = CURRENT_TIMESTAMP
-			WHERE scheduled >= CURRENT_DATE 
-			AND scheduled < CURRENT_TIMESTAMP 
-			AND person_id IS NULL
-			ORDER BY scheduled ASC
-			LIMIT 1");
+			// take the first unused slot and place the recharge
+			Database::query("
+				UPDATE _recharges SET
+					person_id = {$request->person->id},
+					product_code = '{$this->inventoryCode}',
+					phone = '{$request->person->phone}',
+					security_code = '$securityCode',
+					bought = CURRENT_TIMESTAMP
+				WHERE scheduled >= CURRENT_DATE 
+				AND scheduled < CURRENT_TIMESTAMP 
+				AND person_id IS NULL
+				ORDER BY scheduled ASC
+				LIMIT 1");
 
-		// TODO: temporal, remove after kill core2
-		Database::query("INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date, security_code)
-			VALUES ({$request->person->id}, '{$this->inventoryCode}}', '{$request->person->phone}', 2, CURRENT_DATE, '$securityCode')");
+			// check if was me who won the recharge
+			$userWon = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")[0]->cnt > 0;
 
-		// check if was me who won the recharge
+			// if I was the one who got the recharge, process the payment
+			if ($userWon) {
+				try {
+					Money::purchase($request->person->id, $this->inventoryCode);
+				} catch (Exception $e) {
+					// let the developers know what went wrong
+					$alert = new Alert($e->getCode(), $e->getMessage());
+					$alert->post();
+		
+					// rollback the transaction and display error message
+					Database::query("
+						UPDATE _recharges 
+						SET person_id=NULL, product_code=NULL, phone=NULL, security_code=NULL, bought=NULL
+						WHERE security_code = '$securityCode'");
 
-		// TODO: TEMPORAL*
-		/* USE THIS ATER KILL CORE2
-		$userWon = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")[0]->cnt > 0;
-		*/
-		$userWon = Database::query("
-			SELECT sum(cnt) as cnt FROM (
-				SELECT COUNT(id) AS cnt FROM _recargas WHERE security_code = '$securityCode'
-			UNION 
-				SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode')")[0]->cnt > 1;
+					// show error message for unknown issues
+					return $this->displayError('Hemos encontrado un error inesperado. Ya avisamos al equipo técnico. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.', $response);
+				}
 
-		// if I was the one who got the recharge, process the payment
-		if ($userWon) {
-			try {
-				Money::purchase($request->person->id, $this->inventoryCode);
-			} catch (Exception $e) {
-				// let the developers know what went wrong
-				$alert = new Alert($e->getCode(), $e->getMessage());
-				$alert->post();
-	
-				// rollback the transaction and display error message
-				goto error_message;
+				// possitive response
+				return $response->setTemplate('message.ejs', [
+					'header' => 'Canje realizado',
+					'icon' => 'sentiment_very_satisfied',
+					'text' => 'Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.',
+					'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']
+				]);
 			}
-
-			// possitive response
-			return $response->setTemplate('message.ejs', [
-				'header' => 'Canje realizado',
-				'icon' => 'sentiment_very_satisfied',
-				'text' => 'Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.',
-				'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']
-			]);
 		}
 
-		// in case there is an error...
-		error_message:
+		// check is there is a next recharge available
+		$nextRechargeAvailable = Database::query('SELECT scheduled FROM _recharges WHERE scheduled >= CURRENT_TIMESTAMP AND person_id IS NULL ORDER BY scheduled ASC LIMIT 1');
+		if (!empty($nextRechargeAvailable)) {
+			$nextRechargeDate = date('d/m/Y \a \l\a\s h:m:s A', strtotime($nextRechargeAvailable[0]->scheduled));
+			return $this->displayError("Por ahora no hay recargas a realizar. Si estabas cazando una, alguien se te adelantó. La próxima recarga estará disponible el $nextRechargeDate", $response);
+		}
 
-		// rollback the transaction
-		Database::query("
-			UPDATE _recharges 
-			SET person_id=NULL, product_code=NULL, phone=NULL, security_code=NULL, bought=NULL
-			WHERE security_code = '$securityCode'");
-
-		// show error message for unknown issues
-		return $this->displayError('Hemos encontrado un error inesperado. Ya avisamos al equipo técnico. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.', $response);
+		// if there are no recharges available
+		return $this->displayError('Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga disponible. No te desanimes, espera a la hora de la próxima recarga y sé más rápido esta vez.', $response);
 	}
 
 	/**

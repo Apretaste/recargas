@@ -44,7 +44,7 @@
 				<% } else if(recharges.length == 0) { %>
 					<p>Calculando recargas ...</p>
 				<% } else { %>
-					<p>Próximas recargas:</p>
+					<p>Recargas activas:</p>
 					<ul class="times browser-default">
 						<% recharges.forEach(function(item) { %>
 							<li><%= moment(item.scheduled).format('hh:mm:ss A') %></li>
