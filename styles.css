@@ -78,6 +78,10 @@
 	color: #616161;
 }
 
+.cross-out {
+	text-decoration: line-through;
+}
+
 /* bottom space */
 
 .bottom-space {

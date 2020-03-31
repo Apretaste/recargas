@@ -24,7 +24,7 @@ class Service
 		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
 
 		// get the recharges calendar for today
-		$schedule = Database::query('SELECT scheduled FROM _recharges WHERE scheduled >= CURRENT_DATE ORDER BY scheduled ASC');
+		$schedule = Database::query('SELECT scheduled FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE ORDER BY scheduled ASC');
 
 		// create the content array
 		$content = [
@@ -120,7 +120,7 @@ class Service
 		}
 
 		// POSITIVE check if there is a recharge available for the user
-		$isARechargeAvailable = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE scheduled >= CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")[0]->cnt > 0;
+		$isARechargeAvailable = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")[0]->cnt > 0;
 		if($isARechargeAvailable) {
 			// prepare a unique ID to ensure only one recharge is made
 			$securityCode = uniqid('', true);
@@ -133,7 +133,7 @@ class Service
 					phone = '{$request->person->phone}',
 					security_code = '$securityCode',
 					bought = CURRENT_TIMESTAMP
-				WHERE scheduled >= CURRENT_DATE 
+				WHERE DATE(scheduled) = CURRENT_DATE 
 				AND scheduled < CURRENT_TIMESTAMP 
 				AND person_id IS NULL
 				ORDER BY scheduled ASC

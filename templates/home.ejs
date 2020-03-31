@@ -47,7 +47,8 @@
 					<p>Recargas activas:</p>
 					<ul class="times browser-default">
 						<% recharges.forEach(function(item) { %>
-							<li><%= moment(item.scheduled).format('hh:mm:ss A') %></li>
+							<% var crossOut = moment(item.scheduled).isBefore(moment()) ? 'cross-out' : '' %>
+							<li class="<%= crossOut %>"><%= moment(item.scheduled).format('hh:mm:ss A') %></li>
 						<% }) %>
 					</ul>
 					<a href="#!" class="secondary-content" onclick="apretaste.send({command:'RECARGAS PAY'})">
