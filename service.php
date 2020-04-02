@@ -104,8 +104,8 @@ class Service
 		}
 
 		// check if user is not yet level Topacio
-		if ($request->person->levelCode == Level::TOPACIO) {
-			return $this->displayError('Su usuario aún no sea nivel Topacio o superior. Siga usando la app para ganar experiencia y subir de nivel.', $response);
+		if ($request->person->levelCode < Level::TOPACIO) {
+			return $this->displayError('Su usuario aún es nivel Topacio o superior. Siga usando la app para ganar experiencia y subir de nivel.', $response);
 		}
 
 		// check if your phone number is valid 
