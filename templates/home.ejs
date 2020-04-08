@@ -44,7 +44,7 @@
 				<% } else if(recharges.length == 0) { %>
 					<p>Calculando recargas ...</p>
 				<% } else { %>
-					<p>Recargas activas:</p>
+					<p>Recargas de hoy:</p>
 					<ul class="times browser-default">
 						<% recharges.forEach(function(item) { %>
 							<% var crossOut = moment(item.scheduled).isBefore(moment()) ? 'cross-out' : '' %>
@@ -57,5 +57,11 @@
 				<% } %>
 			</li>
 		</ul>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col s12 small">
+		La hora de Cuba es <span id="time"><%= time %></span>. Esta hora se muestra como referencia. La demora de la respuesta puede hacerla diferente de la hora exacta, la cual usa nuestro servidor. Use la hora de su teléfono como guía.
 	</div>
 </div>

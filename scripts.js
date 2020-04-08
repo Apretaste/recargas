@@ -1,6 +1,47 @@
 $(document).ready(function(){
 	$('.tabs').tabs();
+
+	// start counting ...
+	if($('#time').length) {
+		setInterval(counting, 1000);
+	}
 });
+
+// start counting 
+function counting() {
+	// get time in the view
+	var time = $('#time').html();
+
+	// get hour and minutes
+	var parts = time.split(':');
+	var hour = parseInt(parts[0]);
+	var minutes = parseInt(parts[1]);
+	var seconds = parseInt(parts[2]);
+
+	// add one second
+	seconds++;
+
+	// reset seconds
+	if(seconds >= 60) {
+		seconds = 0;
+
+		// reset minutes
+		minutes++;
+		if(minutes >= 60) {
+			minutes = 0;
+
+			// reset hour
+			if(hour >= 12) hour = 1;
+			else hour++;
+		}
+	}
+
+	// save back to the view
+	if(seconds < 10) seconds = '0' + seconds; 
+	if(minutes < 10) minutes = '0' + minutes; 
+	var timeback = (hour + ':' + minutes + ':' + seconds);
+	$('#time').html(timeback);
+}
 
 // shorten a name to fit in the box
 function short(username) {

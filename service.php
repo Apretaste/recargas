@@ -31,7 +31,8 @@ class Service
 			'phone' => $request->person->phone,
 			'credit' => $request->person->credit,
 			'price' => $rechargePrice,
-			'recharges' => $schedule
+			'recharges' => $schedule,
+			'time' => date('g:i:s')
 		];
 
 		// send data to the view
@@ -171,15 +172,8 @@ class Service
 			}
 		}
 
-		// check is there is a next recharge available
-		$nextRechargeAvailable = Database::query('SELECT scheduled FROM _recharges WHERE scheduled >= CURRENT_TIMESTAMP AND person_id IS NULL ORDER BY scheduled ASC LIMIT 1');
-		if (!empty($nextRechargeAvailable)) {
-			$nextRechargeDate = date('d/m/Y \a \l\a\s h:m:s A', strtotime($nextRechargeAvailable[0]->scheduled));
-			return $this->displayError("Por ahora no hay recargas a realizar. Si estabas cazando una, alguien se te adelantó. La próxima recarga estará disponible el $nextRechargeDate", $response);
-		}
-
 		// if there are no recharges available
-		return $this->displayError('Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga disponible. No te desanimes, espera a la hora de la próxima recarga y sé más rápido esta vez.', $response);
+		return $this->displayError('Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga disponible. No te desanimes, espera a la hora de la próxima recarga y sé más rápido esta vez. Las recargas disponibles se mostrarán en al inicio de cada día.', $response);
 	}
 
 	/**
