@@ -111,7 +111,7 @@ class Service
 
 		// check if your phone number is valid 
 		if (!$this->checkNumber($request->person->phone)) {
-			return $this->displayError('El número que insertastes "{$request->person->phone}" no parece un teléfono válido de Cuba. Por favor modifica tu teléfono e intenta nuevamente.', $response);
+			return $this->displayError("El número que insertastes {$request->person->phone} no parece un teléfono válido de Cuba. Por favor modifica tu teléfono e intenta nuevamente.", $response);
 		}
 
 		// check if user has enough credit
