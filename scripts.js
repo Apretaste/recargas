@@ -83,21 +83,13 @@ function sendPhone() {
 		"command": "PERFIL UPDATE",
 		"data": {"cellphone": cell},
 		'redirect': false,
-		'callback': {
-			'name': 'updateRedirect',
-			'data': cell
-		}
+		'callback': {'name': 'updateRedirect'}
 	});
 }
 
+// redirect to home
 function updateRedirect(){
-	showToast('Celular actualizado');
-}
-
-function showToast(text) {
-	M.toast({
-		html: text
-	});
+	apretaste.send({"command": "RECARGAS"});
 }
 
 // start a payment process
