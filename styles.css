@@ -2,9 +2,15 @@
 	font-size: smaller;
 }
 
+/* modal */
+
 .math-challenge {
-	font-size: xx-large;
+	font-size: x-large;
 	font-weight: bold;
+}
+
+.modal-content {
+	padding: 0px 20px !important;
 }
 
 /* gender colors */
