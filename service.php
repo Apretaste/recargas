@@ -21,10 +21,21 @@ class Service
 	public function _main(Request $request, Response $response)
 	{
 		// get the price for the recharge
-		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
 
 		// get the recharges calendar for today
 		$schedule = Database::query('SELECT scheduled FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE ORDER BY scheduled ASC');
+
+		// create captcha
+		$nbr1 = rand(11, 20); $nbr2 = rand(1, 10);
+		$sign = rand(0, 1) === 0 ? '+' : '-';
+		$operation = "$nbr1 $sign $nbr2";
+		$result = ($sign == '+') ? $nbr1 + $nbr2 : $nbr1 - $nbr2;
+
+		// save captcha in the database
+		Database::query("
+			INSERT INTO _recharges_captcha (person_id, operation, result)
+			VALUES ('{$request->person->id}', '$operation', $result)");
 
 		// create the content array
 		$content = [
@@ -32,6 +43,7 @@ class Service
 			'credit' => $request->person->credit,
 			'price' => $rechargePrice,
 			'recharges' => $schedule,
+			'operation' => $operation,
 			'time' => date('g:i:s')
 		];
 
@@ -84,7 +96,7 @@ class Service
 	public function _ayuda(Request $request, Response $response)
 	{
 		// get the price for the recharge
-		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
 
 		$response->setCache('year');
 		$response->setTemplate('help.ejs', ['price' =>$rechargePrice]);
@@ -99,7 +111,7 @@ class Service
 	public function _pay(Request $request, Response $response)
 	{
 		// check if the phone number is blocked for scams
-		$isPhoneBlocked = Database::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone = '{$request->person->phone}'")[0]->cnt > 0;
+		$isPhoneBlocked = Database::queryFirst("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone = '{$request->person->phone}'")->cnt > 0;
 		if ($isPhoneBlocked) {
 			return $this->displayError('Su usuario esté bloqueado y no tiene permisos para recargar. Por favor consulte el soporte si tiene alguna duda.', $response);
 		}
@@ -115,13 +127,19 @@ class Service
 		}
 
 		// check if user has enough credit
-		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'", Database::CACHE_DAY)[0]->price;
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
 		if ($request->person->credit < $rechargePrice) {
 			return $this->displayError('Usted no tiene suficiente crédito para conseguir este recarga. Siga usando la app y ganando crédito e intente nuevamente.', $response);
 		}
 
+		// save captcha in the database
+		$captchaResult = Database::queryFirst("SELECT result FROM _recharges_captcha WHERE person_id = {$request->person->id} ORDER BY inserted DESC LIMIT 1")->result;
+		if ($captchaResult !== $request->input->data->captcha) {
+			return $this->displayError("¿Qué pasa con esa matemática? Respondistes {$request->input->data->captcha}, pero el resultado era $captchaResult. Vuelve hacia atrás e intenta nuevamente. Espero que nadie se halla llevado la recarga.", $response);
+		}
+
 		// POSITIVE check if there is a recharge available for the user
-		$isARechargeAvailable = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")[0]->cnt > 0;
+		$isARechargeAvailable = Database::queryFirst("SELECT COUNT(id) AS cnt FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")->cnt > 0;
 		if($isARechargeAvailable) {
 			// prepare a unique ID to ensure only one recharge is made
 			$securityCode = uniqid('', true);
@@ -141,7 +159,7 @@ class Service
 				LIMIT 1");
 
 			// check if was me who won the recharge
-			$userWon = Database::query("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")[0]->cnt > 0;
+			$userWon = Database::queryFirst("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")->cnt > 0;
 
 			// if I was the one who got the recharge, process the payment
 			if ($userWon) {

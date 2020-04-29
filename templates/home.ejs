@@ -39,29 +39,45 @@
 			<li class="collection-item avatar <%= rechargeDisabled %>">
 				<i class="material-icons circle">looks_3</i>
 				<span class="title">Canjea tu recarga</span>
-				<% if(rechargeDisabled) { %>
-					<p>Necesita número y crédito</p>
-				<% } else if(recharges.length == 0) { %>
+				<% if(recharges.length == 0) { %>
 					<p>Calculando recargas ...</p>
 				<% } else { %>
-					<p>Recargas de hoy:</p>
-					<ul class="times browser-default">
+					<% if(rechargeDisabled) { %>
+						<p class="red-text">Requiere teléfono y crédito</p>
+					<% } %>
+
+					<p class="crossed-out">Recargas de hoy:</p>
+
+					<ul class="times browser-default crossed-out">
 						<% recharges.forEach(function(item) { %>
 							<% var crossOut = moment(item.scheduled).isBefore(moment()) ? 'cross-out' : '' %>
 							<li class="<%= crossOut %>"><%= moment(item.scheduled).format('hh:mm:ss A') %></li>
 						<% }) %>
 					</ul>
-					<a href="#!" class="secondary-content" onclick="apretaste.send({command:'RECARGAS PAY'})">
-						<i class="material-icons">arrow_forward</i>
-					</a>
+
+					<% if(!rechargeDisabled) { %>
+						<a href="#captha" class="secondary-content modal-trigger">
+							<i class="material-icons">arrow_forward</i>
+						</a>
+					<% } %>
 				<% } %>
 			</li>
 		</ul>
 	</div>
+
+	<div class="col s12 small">
+		La hora de Cuba es <span id="time"><%= time %></span>. Use esta hora como referencia. La demora de la respuesta puede hacerla diferente de la hora exacta.
+	</div>
 </div>
 
-<div class="row">
-	<div class="col s12 small">
-		La hora de Cuba es <span id="time"><%= time %></span>. Esta hora se muestra como referencia. La demora de la respuesta puede hacerla diferente de la hora exacta, la cual usa nuestro servidor. Use la hora de su teléfono como guía.
+<!-- CAPCTHA -->
+<div id="captha" class="modal">
+	<div class="modal-content">
+		<p>Vamos a hacerlo más interesante. ¿Cuál es el resultado de la siguiente operación?</p>
+		<p class="center-align green-text math-challenge"><%= operation %> = ??</p>
+		<input id="result" type="number">
+	</div>
+	<div class="modal-footer">
+		<a href="#!" onclick="pay()" class="waves-effect waves-green green-text btn-flat">Responder</a>
 	</div>
 </div>

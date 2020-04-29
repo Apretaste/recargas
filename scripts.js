@@ -1,5 +1,13 @@
 $(document).ready(function(){
+	// start tabs
 	$('.tabs').tabs();
+
+	// start modal
+	$('.modal').modal({
+		onOpenEnd: function(){
+			$('#result').focus();
+		}
+	});
 
 	// start counting ...
 	if($('#time').length) {
@@ -89,5 +97,20 @@ function updateRedirect(){
 function showToast(text) {
 	M.toast({
 		html: text
+	});
+}
+
+// start a payment process
+function pay() {
+	// get the math result
+	var result = $('#result').val();
+
+	// do not submit empty results
+	if(!result) return false;
+
+	// try to get the recharge
+	apretaste.send({
+		command: 'RECARGAS PAY',
+		data: {'captcha': result}
 	});
 }

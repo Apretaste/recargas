@@ -2,6 +2,11 @@
 	font-size: smaller;
 }
 
+.math-challenge {
+	font-size: xx-large;
+	font-weight: bold;
+}
+
 /* gender colors */
 
 .M {
@@ -74,7 +79,7 @@
 	background-color: #e0e0e0;
 }
 
-.collection-item.disabled .title {
+.collection-item.disabled .title, .collection-item.disabled .crossed-out {
 	text-decoration: line-through;
 }
 
