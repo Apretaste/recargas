@@ -60,6 +60,14 @@
 
 /* changes to the collections */
 
+.completed {
+	opacity: 0.3;
+}
+
+.cross-out {
+	text-decoration: line-through;
+}
+
 .collection {
 	border: 0px;
 }
@@ -79,22 +87,6 @@
 	line-height: 1rem;
 	list-style-type: circle !important;
 	padding-left: 16px;
-}
-
-.collection-item.disabled {
-	background-color: #e0e0e0;
-}
-
-.collection-item.disabled .title, .collection-item.disabled .crossed-out {
-	text-decoration: line-through;
-}
-
-.collection-item.disabled .secondary-content {
-	color: #616161;
-}
-
-.cross-out {
-	text-decoration: line-through;
 }
 
 /* bottom space */

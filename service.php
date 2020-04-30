@@ -37,13 +37,22 @@ class Service
 			INSERT INTO _recharges_captcha (person_id, operation, result)
 			VALUES ('{$request->person->id}', '$operation', $result)");
 
+		// get the status for each step
+		$status = new \stdClass();
+		$status->level = $request->person->levelCode >= Level::TOPACIO ? 'completed' : '';
+		$status->phone = $this->checkNumber($request->person->phone) ? 'completed' : '';
+		$status->credit = $request->person->credit >= $rechargePrice ? 'completed' : '';
+		$status->recharge = $status->level && $status->phone && $status->credit ? '' : 'completed';
+
 		// create the content array
 		$content = [
 			'phone' => $request->person->phone,
 			'credit' => $request->person->credit,
+			'level' => $request->person->level,
 			'price' => $rechargePrice,
 			'recharges' => $schedule,
 			'operation' => $operation,
+			'status' => $status,
 			'time' => date('g:i:s')
 		];
 
