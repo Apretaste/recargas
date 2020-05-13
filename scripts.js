@@ -73,7 +73,7 @@ function sendPhone() {
 	var cell = $('#cell').val().trim();
 
 	// check the coupon is not empty
-	if (cell.length !== 10 || !cell.startsWith("53")) {
+	if (cell.length !== 10 || !cell.startsWith('53')) {
 		M.toast({html: 'Su número de celular debe empezar con 53 y tener 10 dígitos'});
 		return false;
 	}
@@ -105,4 +105,12 @@ function pay() {
 		command: 'RECARGAS PAY',
 		data: {'captcha': result}
 	});
+}
+
+// pollyfill startsWith for Android 4.4
+if (!String.prototype.startsWith) {
+	String.prototype.startsWith = function(searchString, position){
+		position = position || 0;
+		return this.substr(position, searchString.length) === searchString;
+	};
 }

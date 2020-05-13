@@ -32,10 +32,19 @@ class Service
 		$operation = "$nbr1 $sign $nbr2";
 		$result = ($sign == '+') ? $nbr1 + $nbr2 : $nbr1 - $nbr2;
 
-		// save captcha in the database
-		Database::query("
-			INSERT INTO _recharges_captcha (person_id, operation, result)
-			VALUES ('{$request->person->id}', '$operation', $result)");
+		// create the location for the captcha image
+		$operationImage = LOCAL_TEMP_FOLDER . md5(time() . rand(1,100)) . '.png';
+
+		// make operation to become an image
+		$im = imagecreate(67, 17);
+		imagecolorallocate($im, 255, 255, 255);
+		$txt = imagecolorallocate($im, 0, 0, 0);
+		imagestring($im, 5, 1, 0, $operation, $txt);
+		imagepng($im, $operationImage);
+		imagedestroy($im);
+
+		// save operation in the database
+		Database::query("INSERT INTO _recharges_captcha (person_id, result) VALUES ('{$request->person->id}', $result)");
 
 		// get the status for each step
 		$status = new \stdClass();
@@ -51,13 +60,13 @@ class Service
 			'level' => $request->person->level,
 			'price' => $rechargePrice,
 			'recharges' => $schedule,
-			'operation' => $operation,
+			'operation' => basename($operationImage),
 			'status' => $status,
 			'time' => date('g:i:s')
 		];
 
 		// send data to the view
-		$response->setTemplate('home.ejs', $content);
+		$response->setTemplate('home.ejs', $content, [$operationImage]);
 	}
 
 	/**
