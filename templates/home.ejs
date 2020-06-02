@@ -1,52 +1,113 @@
 <div class="row">
-    <div class="col s12">
-        <ul class="tabs tabs-fixed-width">
-            <li class="tab"><a href="#" class="active">Recarga Diaria</a></li>
-            <li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS ANTERIORES'})">Últimos canjes</a>
-            </li>
-        </ul>
-
-        <p>El primero que llegue podrá canjear una recarga Cubacel por §<%= price %> créditos. El contador se reinicia a
-            diario, a las 11:59:59 PM, por lo que si no la obtienes hoy, mañana habrá otra disponible. ¡Mucha
-            suerte!</p>
-
-        <% if (recharge) { %>
-            <p>La recarga del día de hoy se la llevó</p>
-            <ul class="collection" style="margin: 0; border: none;">
-                <li class="collection-item avatar" style="min-height: auto;padding-top: 0;padding-bottom: 0;">
-                    <div class="circle"
-                         style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images") %> background-color: <%= colors[recharge.avatarColor] %>;">
-                    </div>
-
-                    <span class="title"><b
-                                onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
-                    <p><%= formatTime(recharge.inserted) %></p>
-                </li>
-            </ul>
-            <p>No te desanimes. Mañana habra otra recarga esperando por tí.</p>
-        <% } else if(hasRechargeInLastMonth){ %>
-            <p>Usted ya realizó una recarga este mes, solo se permite una recarga mensual por usuario.</p>
-        <% } else if(phoneIsBlocked){ %>
-            <p>Su número ha sido bloqueado por ser parte de acciones fraudulentas para obtener recarga en el pasado.</p>
-        <% } else if(!isOldUser){ %>
-            <p>Lo sentimos, para realizar una recarga su usuario debe tener más de dos meses registrado.</p>
-        <% } else { %>
-            <p>Usando el botón a continuación puede enviar una recarga al número <b><%= cellphone %></b>. Cambie su
-                teléfono desde el perfil.</p>
-            <a class="waves-effect waves-light btn" href="#!" onclick="openModal()">Canjear por §<%= price %></a>
-            <p><small>Las recargas pueden demorar hasta 3 días en acreditarse.</small></p>
-        <% } %>
-    </div>
+	<div class="col s12">
+		<ul class="tabs tabs-fixed-width">
+			<li class="tab"><a href="#" class="active">Recargas</a></li>
+			<li class="tab"><a href="#" onclick="apretaste.send({command:'RECARGAS ANTERIORES'})">Ganadores</a></li>
+			<li class="tab"><a href="#" onclick="apretaste.send({command:'RECARGAS AYUDA'})">Ayuda</a></li>
+		</ul>
+	</div>
 </div>
 
-<!-- MODALS -->
+<% if(!status.level) { %>
+	<p class="red-text text-darken-1 center-align">Necesitas llegar a nivel Topacio</p>
+<% } else if(!status.phone) { %>
+	<p class="red-text text-darken-1 center-align">Necesitas agregar tu teléfono</p>
+<% } else if(!status.credit) { %>
+	<p class="red-text text-darken-1 center-align">Necesitas §40 o más de crédito</p>
+<% } %>
 
-<div id="modal" class="modal">
-    <div class="modal-content">
-        <p>¿Esta seguro de realizar este canje? Esta acción es irrevocable.</p>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-light btn-flat">Cancelar</a>
-        <a onclick="pay()" class="modal-close waves-effect waves-green btn-flat green-text">Canjear</a>
-    </div>
+<div class="row">
+	<div class="col s12">
+		<ul class="collection">
+			<!-- GET TO LEVEL TOPACIO -->
+			<li class="collection-item avatar <%= status.level %>">
+				<i class="material-icons circle">arrow_upward</i>
+				<span class="title">Llega a nivel Topacio</span>
+				<p>Eres nivel <%= level %></p>
+				<% if(status.level) { %>
+					<i class="material-icons secondary-content green-text">check</i>
+				<% } %>
+			</li>
+
+			<!-- ADD CELLPHONE -->
+			<li class="collection-item avatar <%= status.phone %>">
+				<i class="material-icons circle">phone_iphone</i>
+				<span class="title">Agrega tu teléfono</span>
+				<p>
+					<a href="#!" class="" onclick="apretaste.send({command:'RECARGAS TELEFONO'})">
+						<% if(status.phone) { %>
+							+<%= phone %>
+						<% } else { %>
+							Número a recargar
+						<% } %>
+
+						<i class="material-icons tiny">create</i>
+					</a>
+				</p>
+
+				<% if(status.phone) { %>
+					<i class="material-icons secondary-content green-text">check</i>
+				<% } %>
+			</li>
+
+			<!-- GET ENOUGH CREDITS -->
+			<li class="collection-item avatar <%= status.credit %>">
+				<i class="material-icons circle">attach_money</i>
+				<span class="title">Gana crédito</span>
+				<p>Tienes &sect;<%= credit %> de &sect;<%= price %></p>
+
+				<% if(status.credit) { %>
+					<i class="material-icons secondary-content green-text">check</i>
+				<% } %>
+			</li>
+
+			<!-- GET A RECHARGE -->
+			<li class="collection-item avatar <%= status.recharge %>">
+				<i class="material-icons circle">card_giftcard</i>
+				<span class="title">Canjea tu recarga</span>
+				<% if(recharges.length == 0) { %>
+					<p>Calculando recargas ...</p>
+				<% } else { %>
+					<p>Recargas de hoy:</p>
+
+					<ul class="times browser-default">
+						<% recharges.forEach(function(item) { %>
+							<% var crossOut = moment(item.scheduled).isBefore(moment()) ? 'cross-out' : '' %>
+							<li class="<%= crossOut %>"><%= moment(item.scheduled).format('hh:mm:ss A') %></li>
+						<% }) %>
+					</ul>
+
+					<% if(!status.recharge && recharges.length) { %>
+						<a href="#captha" class="secondary-content modal-trigger">
+							<i class="material-icons">arrow_forward</i>
+						</a>
+					<% } %>
+				<% } %>
+			</li>
+		</ul>
+	</div>
+
+	<div class="col s12 small">
+		La hora de Cuba es <span id="time"><%= time %></span>. Use esta hora como referencia. La demora de la respuesta puede hacerla diferente de la hora exacta.
+	</div>
+</div>
+
+<!-- CAPCTHA -->
+<div id="captha" class="modal">
+	<div class="modal-content">
+		<p>Vamos a hacerlo más interesante. ¿Cuál es el resultado de la siguiente operación?</p>
+		<div class="row">
+			<div class="col s6 right-align">
+				<span class="green-text math-challenge">
+					<img class="fullscreen" src="{{APP_IMAGE_PATH}}<%= operation %>" alt="operacion"/> =
+				</span>
+			</div>
+			<div class="col s6">
+				<input id="result" type="number">
+			</div>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<a href="#!" onclick="pay()" class="waves-effect waves-green green-text btn-flat">Responder</a>
+	</div>
 </div>

@@ -1,79 +1,70 @@
-$(document).ready(function () {
+$(document).ready(function(){
+	// start tabs
 	$('.tabs').tabs();
-	$('.modal').modal();
+
+	// start modal
+	$('.modal').modal({
+		onOpenEnd: function(){
+			$('#result').focus();
+		}
+	});
+
+	// start counting ...
+	if($('#time').length) {
+		setInterval(counting, 1000);
+	}
 });
 
-var colors = {
-	'azul': '#99F9FF',
-	'verde': '#9ADB05',
-	'rojo': '#FF415B',
-	'morado': '#58235E',
-	'naranja': '#F38200',
-	'amarillo': '#FFE600'
-};
+// start counting 
+function counting() {
+	// get time in the view
+	var time = $('#time').html();
 
-var avatars = {
-	apretin: {caption: "Apretín", gender: 'M'},
-	apretina: {caption: "Apretina", gender: 'F'},
-	artista: {caption: "Artista", gender: 'M'},
-	bandido: {caption: "Bandido", gender: 'M'},
-	belleza: {caption: "Belleza", gender: 'F'},
-	chica: {caption: "Chica", gender: 'F'},
-	coqueta: {caption: "Coqueta", gender: 'F'},
-	cresta: {caption: "Cresta", gender: 'M'},
-	deportiva: {caption: "Deportiva", gender: 'F'},
-	dulce: {caption: "Dulce", gender: 'F'},
-	emo: {caption: "Emo", gender: 'M'},
-	oculto: {caption: "Oculto", gender: 'M'},
-	extranna: {caption: "Extraña", gender: 'F'},
-	fabulosa: {caption: "Fabulosa", gender: 'F'},
-	fuerte: {caption: "Fuerte", gender: 'M'},
-	ganadero: {caption: "Ganadero", gender: 'M'},
-	geek: {caption: "Geek", gender: 'F'},
-	genia: {caption: "Genia", gender: 'F'},
-	gotica: {caption: "Gótica", gender: 'F'},
-	gotico: {caption: "Gótico", gender: 'M'},
-	guapo: {caption: "Guapo", gender: 'M'},
-	hawaiano: {caption: "Hawaiano", gender: 'M'},
-	hippie: {caption: "Hippie", gender: 'M'},
-	hombre: {caption: "Hombre", gender: 'M'},
-	atengo: {caption: "Atengo", gender: 'M'},
-	libre: {caption: "Libre", gender: 'F'},
-	jefe: {caption: "Jefe", gender: 'M'},
-	jugadora: {caption: "Jugadora", gender: 'F'},
-	mago: {caption: "Mago", gender: 'M'},
-	metalero: {caption: "Metalero", gender: 'M'},
-	modelo: {caption: "Modelo", gender: 'F'},
-	moderna: {caption: "Moderna", gender: 'F'},
-	musico: {caption: "Músico", gender: 'M'},
-	nerd: {caption: "Nerd", gender: 'M'},
-	punk: {caption: "Punk", gender: 'M'},
-	punkie: {caption: "Punkie", gender: 'M'},
-	rap: {caption: "Rap", gender: 'M'},
-	rapear: {caption: "Rapear", gender: 'M'},
-	rapero: {caption: "Rapero", gender: 'M'},
-	rock: {caption: "Rock", gender: 'M'},
-	rockera: {caption: "Rockera", gender: 'F'},
-	rubia: {caption: "Rubia", gender: 'F'},
-	rudo: {caption: "Rudo", gender: 'M'},
-	sencilla: {caption: "Sencilla", gender: 'F'},
-	sencillo: {caption: "Sencillo", gender: 'M'},
-	sennor: {caption: "Señor", gender: 'M'},
-	sennorita: {caption: "Señorita", gender: 'F'},
-	sensei: {caption: "Sensei", gender: 'M'},
-	surfista: {caption: "Surfista", gender: 'M'},
-	tablista: {caption: "Tablista", gender: 'F'},
-	vaquera: {caption: "Vaquera", gender: 'F'}
-};
+	// get hour and minutes
+	var parts = time.split(':');
+	var hour = parseInt(parts[0]);
+	var minutes = parseInt(parts[1]);
+	var seconds = parseInt(parts[2]);
 
-function pad(n, width, z) {
-	z = z || '0';
-	n = n + '';
-	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+	// add one second
+	seconds++;
+
+	// reset seconds
+	if(seconds >= 60) {
+		seconds = 0;
+
+		// reset minutes
+		minutes++;
+		if(minutes >= 60) {
+			minutes = 0;
+
+			// reset hour
+			if(hour >= 12) hour = 1;
+			else hour++;
+		}
+	}
+
+	// save back to the view
+	if(seconds < 10) seconds = '0' + seconds; 
+	if(minutes < 10) minutes = '0' + minutes; 
+	var timeback = (hour + ':' + minutes + ':' + seconds);
+	$('#time').html(timeback);
 }
 
-function getAvatar(avatar, serviceImgPath) {
-	return "background-image: url(" + serviceImgPath + "/" + avatar + ".png);";
+// shorten a name to fit in the box
+function short(username) {
+	if (username.length > 9) {
+		return username.substring(0, 6) + '...';
+	}
+	return username;
+}
+
+// open the person's profile
+function profile(username) {
+	apretaste.send({
+		'command': 'PERFIL',
+		'data': {'username': username}
+	});
 }
 
 // change the phone number
@@ -82,94 +73,44 @@ function sendPhone() {
 	var cell = $('#cell').val().trim();
 
 	// check the coupon is not empty
-	if (cell.length !== 10 || !cell.startsWith("53")) {
-		M.toast({html: 'Su número de celular debe empezar con 53 y tener una longitus de 10 dígitos'});
+	if (cell.length !== 10 || !cell.startsWith('53')) {
+		M.toast({html: 'Su número de celular debe empezar con 53 y tener 10 dígitos'});
 		return false;
 	}
 
+	// submit the number
 	apretaste.send({
 		"command": "PERFIL UPDATE",
 		"data": {"cellphone": cell},
-		"redirect": false,
-		"callback": {"name": "callbackReloadHome", "data": ""}
+		'redirect': false,
+		'callback': {'name': 'updateRedirect'}
 	});
 }
 
-// callback to go Home
-function callbackReloadHome() {
+// redirect to home
+function updateRedirect(){
 	apretaste.send({"command": "RECARGAS"});
 }
 
-// formats a time
-function formatTime(dateStr) {
-	var date = new Date(dateStr);
-	var hour = (date.getHours() < 12) ? date.getHours() : date.getHours() - 12;
-	var minutes = pad(date.getMinutes(), 2);
-	var amOrPm = (date.getHours() < 12) ? "am" : "pm";
-	return hour + ':' + minutes + amOrPm;
-}
-
-// show the modal popup
-function openModal(code) {
-	$('#modal').modal('open');
-}
-
-// create a new purchase
+// start a payment process
 function pay() {
+	// get the math result
+	var result = $('#result').val();
+
+	// do not submit empty results
+	if(!result) return false;
+
+	// try to get the recharge
 	apretaste.send({
-		command: "RECARGAS PAY",
-		data: {'code': 'CUBACEL_10'},
-		redirect: true
+		command: 'RECARGAS PAY',
+		data: {'captcha': result}
 	});
 }
 
-function _typeof(obj) {
-	if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-		_typeof = function _typeof(obj) {
-			return typeof obj;
-		};
-	} else {
-		_typeof = function _typeof(obj) {
-			return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-		};
-	}
-	return _typeof(obj);
-}
-
-if (!Object.keys) {
-	Object.keys = function () {
-		'use strict';
-
-		var hasOwnProperty = Object.prototype.hasOwnProperty,
-			hasDontEnumBug = !{
-				toString: null
-			}.propertyIsEnumerable('toString'),
-			dontEnums = ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor'],
-			dontEnumsLength = dontEnums.length;
-		return function (obj) {
-			if (_typeof(obj) !== 'object' && (typeof obj !== 'function' || obj === null)) {
-				throw new TypeError('Object.keys called on non-object');
-			}
-
-			var result = [],
-				prop,
-				i;
-
-			for (prop in obj) {
-				if (hasOwnProperty.call(obj, prop)) {
-					result.push(prop);
-				}
-			}
-
-			if (hasDontEnumBug) {
-				for (i = 0; i < dontEnumsLength; i++) {
-					if (hasOwnProperty.call(obj, dontEnums[i])) {
-						result.push(dontEnums[i]);
-					}
-				}
-			}
-
-			return result;
-		};
-	}();
+// pollyfill startsWith for Android 4.4
+if (!String.prototype.startsWith) {
+	String.prototype.startsWith = function(searchString, position){
+		position = position || 0;
+		return this.substr(position, searchString.length) === searchString;
+	};
 }

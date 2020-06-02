@@ -7,10 +7,17 @@
 			<input id="cell" type="number" maxlength="10" value="<%= phone %>"/>
 			<label for="cell">Insertar número</label>
 		</div>
+
+		<button class="btn waves-effect waves-light green" onclick="sendPhone()" name="action">Enviar
+			<i class="material-icons right">send</i>
+		</button>
 	</div>
 </div>
 
-<!-- SUBMIT -->
+<div class="bottom-space"></div>
+
 <div class="fixed-action-btn">
-	<a class="btn-floating btn-large waves-effect waves-light green" href="#!" onclick="sendPhone()"><i class="material-icons">send</i></a>
+	<a class="btn-floating btn-large waves-effect waves-light green" href="#!" onclick="apretaste.send({command: 'RECARGAS'})">
+		<i class="material-icons">arrow_back</i>
+	</a>
 </div>

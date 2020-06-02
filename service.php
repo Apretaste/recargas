@@ -1,188 +1,246 @@
 <?php
 
+use Framework\Alert;
+use Framework\Database;
+use Apretaste\Money;
+use Apretaste\Level;
+use Apretaste\Request;
+use Apretaste\Response;
+
 class Service
 {
-	public function checkNumber(&$number){
-		$number = trim($number);
-		$number = str_replace(['-', ' ', '+', '(', ')'], '', $number);
-		if (strlen($number) === 8) $number = "53$number";
-		if (strlen($number) !== 10) return false;
-		if (strpos($number, '53')!==0) return false;
-		return true;
-	}
+	private $inventoryCode = 'CUBACEL_10';
 
 	/**
-	 * Main
+	 * Display the steps to buy recharges
 	 *
+	 * @param  Request $request
+	 * @param  Response $response
 	 * @author salvipascual
-	 * @param Request $request
-	 * @param Response $response
 	 */
-	public function _main (Request $request, Response $response)
+	public function _main(Request $request, Response $response)
 	{
-		// check if the user has a cellphone
-		$phone = $request->person->cellphone;
-		if(!$this->checkNumber($phone)) {
-			return $response->setTemplate('phone.ejs', ['phone' =>$phone]);
-		}
+		// get the price for the recharge
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
 
-		// get the price for the recharge for today
-		$product = Connection::query("SELECT name, price FROM inventory WHERE code = 'CUBACEL_10'");
-		$price = $product[0]->price;
+		// get the recharges calendar for today
+		$schedule = Database::query('SELECT scheduled FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE ORDER BY scheduled ASC');
 
-		// get the recharge for today, or false
-		$recharge = Connection::query('
-			SELECT A.inserted, B.username, B.avatar, B.avatarColor
-			FROM _recargas A
-			JOIN person B
-			ON A.person_id = B.id
-			WHERE inserted >= DATE(NOW())');
-		$recharge = empty($recharge) ? false : $recharge[0];
+		// create captcha
+		$nbr1 = rand(11, 20); $nbr2 = rand(1, 10);
+		$sign = rand(0, 1) === 0 ? '+' : '-';
+		$operation = "$nbr1 $sign $nbr2";
+		$result = ($sign == '+') ? $nbr1 + $nbr2 : $nbr1 - $nbr2;
 
-		// check if the user has bough a recharge the current month
-		$lastMonth = !empty(Connection::query("
-			SELECT id FROM _recargas
-			WHERE person_id = '{$request->person->id}'
-			AND MONTH(inserted) = MONTH(CURRENT_DATE) AND YEAR(inserted) = YEAR(CURRENT_DATE)"));
+		// create the location for the captcha image
+		$operationImage = LOCAL_TEMP_FOLDER . md5(time() . rand(1,100)) . '.png';
 
-		// set the cache till the end of the day
-		if($recharge) {
-			$minsUntilDayEnds = ceil((strtotime('23:59:59') - time()) / 60);
-			$response->setCache($minsUntilDayEnds);
-		}
+		// make operation to become an image
+		$im = imagecreate(67, 17);
+		imagecolorallocate($im, 255, 255, 255);
+		$txt = imagecolorallocate($im, 0, 0, 0);
+		imagestring($im, 5, 1, 0, $operation, $txt);
+		imagepng($im, $operationImage);
+		imagedestroy($im);
 
-		// check if the phone is blocked
-		$phoneIsBlocked = !empty(Connection::query("SELECT * FROM blocked_numbers WHERE cellphone='$phone'"));
+		// save operation in the database
+		Database::query("INSERT INTO _recharges_captcha (person_id, result) VALUES ('{$request->person->id}', $result)");
 
-		// check if the user is a month old
-		$isOldUser = date_diff(new DateTime(), new DateTime($request->person->insertion_date))->days > 60;
+		// get the status for each step
+		$status = new \stdClass();
+		$status->level = $request->person->levelCode >= Level::TOPACIO ? 'completed' : '';
+		$status->phone = $this->checkNumber($request->person->phone) ? 'completed' : '';
+		$status->credit = $request->person->credit >= $rechargePrice ? 'completed' : '';
+		$status->recharge = $status->level && $status->phone && $status->credit ? '' : 'completed';
 
 		// create the content array
 		$content = [
-				'price'                  => $price,
-				'cellphone'              => $request->person->cellphone,
-				'recharge'               => $recharge,
-				'hasRechargeInLastMonth' => $lastMonth,
-				'phoneIsBlocked'         => $phoneIsBlocked,
-				'isOldUser'              => $isOldUser
+			'phone' => $request->person->phone,
+			'credit' => $request->person->credit,
+			'level' => $request->person->level,
+			'price' => $rechargePrice,
+			'recharges' => $schedule,
+			'operation' => basename($operationImage),
+			'status' => $status,
+			'time' => date('g:i:s')
 		];
 
 		// send data to the view
-		$response->setTemplate('home.ejs', $content);
+		$response->setTemplate('home.ejs', $content, [$operationImage]);
 	}
 
 	/**
 	 * Check the last 20 previous recharges
 	 *
-	 * @author salvipascual
 	 * @param Request $request
 	 * @param Response $response
+	 * @author salvipascual
 	 */
-	public function _anteriores (Request $request, Response $response)
+	public function _anteriores(Request $request, Response $response)
 	{
 		// show a list of previous recharges
-		$recharges = Connection::query("
-			SELECT B.username, DATE_FORMAT(A.inserted, '%e/%c/%Y %r') AS inserted, B.avatar, B.avatarColor
-			FROM _recargas A
-			JOIN person B
+		$recharges = Database::query("
+			SELECT B.username, B.avatar, B.avatarColor, B.gender, A.bought
+			FROM _recharges A
+			JOIN person B 
 			ON A.person_id = B.id
-			ORDER BY A.inserted DESC
+			ORDER BY bought DESC
 			LIMIT 20");
 
 		// set the cache till the end of the day and send data to the view
-		$minsUntilDayEnds = ceil((strtotime('23:59:59') - time()) / 60);
-		$response->setCache($minsUntilDayEnds);
-		$response->setTemplate('anteriores.ejs', ['recharges' =>$recharges]);
+		$response->setCache('hour');
+		$response->setTemplate('anteriores.ejs', ['recharges' => $recharges]);
+	}
+
+	/**
+	 * Updates the phone number
+	 *
+	 * @param Request $request
+	 * @param Response $response
+	 * @author salvipascual
+	 */
+	public function _telefono(Request $request, Response $response)
+	{
+		$response->setTemplate('phone.ejs', ['phone' => $request->person->phone]);
+	}
+
+	/**
+	 * Display the help document
+	 *
+	 * @param Request $request
+	 * @param Response $response
+	 * @author salvipascual
+	 */
+	public function _ayuda(Request $request, Response $response)
+	{
+		// get the price for the recharge
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
+
+		$response->setCache('year');
+		$response->setTemplate('help.ejs', ['price' =>$rechargePrice]);
 	}
 
 	/**
 	 * Pay for an item and add the items to the database
 	 *
-	 * @param Request
-	 * @param Response
-	 *
-	 * @throws Exception
+	 * @param Request $request
+	 * @param Response $response
 	 */
-	public function _pay (Request $request, Response $response)
+	public function _pay(Request $request, Response $response)
 	{
-		// get buyer and code
-		$buyer = $request->person;
-		$code = $request->input->data->code;
-
-		// check if a recharge was already done today
-		$isMaxReached = Connection::query('SELECT COUNT(id) AS cnt FROM _recargas WHERE inserted >= DATE(NOW())')[0]->cnt > 0;
-
-		// do not continue if recharges max was reached today
-		if($isMaxReached) {
-			$response->setTemplate('message.ejs', [
-					'header' => '¡Sigue intentando!',
-					'icon'   => 'sentiment_very_dissatisfied',
-					'text'   => 'Lamentablemente, alguien más fue un poco más rápido que tú y canjeo la recarga del día. No te desanimes, mañana tendrás otra oportunidad para tratar de canjearla.',
-					'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']]);
-			return;
+		// check if the phone number is blocked for scams
+		$isPhoneBlocked = Database::queryFirst("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone = '{$request->person->phone}'")->cnt > 0;
+		if ($isPhoneBlocked) {
+			return $this->displayError('Su usuario esté bloqueado y no tiene permisos para recargar. Por favor consulte el soporte si tiene alguna duda.', $response);
 		}
 
-		// do not continue if the phone number is blocked for scams
-		$isUserBlocked = Connection::query("SELECT COUNT(*) AS cnt FROM blocked_numbers WHERE cellphone='{$buyer->cellphone}'")[0]->cnt > 0;
-
-		// check the buyer is at least one month old
-		$isNewUser = date_diff(new DateTime(), new DateTime($buyer->insertion_date))->days < 60;
-
-		// do not continue if a rule is broken
-		if($isUserBlocked || $isNewUser) {
-			$response->setTemplate('message.ejs', [
-					'header' => 'Canje rechazado',
-					'icon'   => 'sentiment_very_dissatisfied',
-					'text'   => 'Puede que su usuario esté bloqueado o que aún no tenga permisos para comprar recargas. Por favor consulte el soporte si tiene alguna duda.',
-					'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']]);
-			return;
+		// check if user is not yet level Topacio
+		if ($request->person->levelCode < Level::TOPACIO) {
+			return $this->displayError('Su usuario aún es nivel Topacio o superior. Siga usando la app para ganar experiencia y subir de nivel.', $response);
 		}
 
-		$security_code = uniqid('',true);
+		// check if your phone number is valid 
+		if (!$this->checkNumber($request->person->phone)) {
+			return $this->displayError("El número que insertastes {$request->person->phone} no parece un teléfono válido de Cuba. Por favor modifica tu teléfono e intenta nuevamente.", $response);
+		}
 
-		// add the recharge to the table
-		// TODO: stage = 2, se mantiene mientras exista la regla de negocio "una recarga por fecha"
-		Connection::query("
-			INSERT IGNORE INTO _recargas (person_id, product_code, cellphone, stage, inserted_date, security_code)
-			VALUES ({$buyer->id}, '$code', '{$buyer->cellphone}', 2, CURRENT_DATE, '$security_code')");
+		// check if user has enough credit
+		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
+		if ($request->person->credit < $rechargePrice) {
+			return $this->displayError('Usted no tiene suficiente crédito para conseguir este recarga. Siga usando la app y ganando crédito e intente nuevamente.', $response);
+		}
 
-		$r = Connection::query("SELECT * FROM _recargas where security_code = '$security_code'");
-		if (isset($r[0]))
-		{
-			// process the payment
-			try {
-				MoneyNew::buy($buyer->id, $code);
+		// save captcha in the database
+		$captchaResult = Database::queryFirst("SELECT result FROM _recharges_captcha WHERE person_id = {$request->person->id} ORDER BY inserted DESC LIMIT 1")->result;
+		if ($captchaResult !== $request->input->data->captcha) {
+			return $this->displayError("¿Qué pasa con esa matemática? Respondistes {$request->input->data->captcha}, pero el resultado era $captchaResult. Vuelve hacia atrás e intenta nuevamente. Espero que nadie se halla llevado la recarga.", $response);
+		}
+
+		// POSITIVE check if there is a recharge available for the user
+		$isARechargeAvailable = Database::queryFirst("SELECT COUNT(id) AS cnt FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")->cnt > 0;
+		if($isARechargeAvailable) {
+			// prepare a unique ID to ensure only one recharge is made
+			$securityCode = uniqid('', true);
+
+			// take the first unused slot and place the recharge
+			Database::query("
+				UPDATE _recharges SET
+					person_id = {$request->person->id},
+					product_code = '{$this->inventoryCode}',
+					phone = '{$request->person->phone}',
+					security_code = '$securityCode',
+					bought = CURRENT_TIMESTAMP
+				WHERE DATE(scheduled) = CURRENT_DATE 
+				AND scheduled < CURRENT_TIMESTAMP 
+				AND person_id IS NULL
+				ORDER BY scheduled ASC
+				LIMIT 1");
+
+			// check if was me who won the recharge
+			$userWon = Database::queryFirst("SELECT COUNT(id) AS cnt FROM _recharges WHERE security_code = '$securityCode'")->cnt > 0;
+
+			// if I was the one who got the recharge, process the payment
+			if ($userWon) {
+				try {
+					Money::purchase($request->person->id, $this->inventoryCode);
+				} catch (Exception $e) {
+					// let the developers know what went wrong
+					$alert = new Alert($e->getCode(), $e->getMessage());
+					$alert->post();
+		
+					// rollback the transaction and display error message
+					Database::query("
+						UPDATE _recharges 
+						SET person_id=NULL, product_code=NULL, phone=NULL, security_code=NULL, bought=NULL
+						WHERE security_code = '$securityCode'");
+
+					// show error message for unknown issues
+					return $this->displayError('Hemos encontrado un error inesperado. Ya avisamos al equipo técnico. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.', $response);
+				}
 
 				// possitive response
-				$response->setTemplate('message.ejs', [
+				return $response->setTemplate('message.ejs', [
 					'header' => 'Canje realizado',
-					'icon'   => 'sentiment_very_satisfied',
-					'text'   => 'Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.',
-					'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']]);
-				return;
-
-			} catch (Exception $e) {
-				echo $e->getMessage();
-
-				// rollback
-				Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
-
-				$response->setTemplate('message.ejs', [
-						'header' => 'Error inesperado',
-						'icon'   => 'sentiment_very_dissatisfied',
-						'text'   => 'Hemos encontrado un error procesando su canje. Por favor intente nuevamente, si el problema persiste, escríbanos al soporte.',
-						'button' => ['href' => 'RECARGAS', 'caption' => 'Reintentar']]);
-				return;
+					'icon' => 'sentiment_very_satisfied',
+					'text' => 'Su canje se ha realizado satisfactoriamente, y su teléfono recibirá una recarga en menos de tres días. Si tiene cualquier pregunta, por favor no dude en escribirnos al soporte.',
+					'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']
+				]);
 			}
 		}
 
-		// rollback
-		Connection::query("DELETE FROM _recargas where security_code = '$security_code'");
+		// if there are no recharges available
+		return $this->displayError('Lamentablemente, alguien fue un poco más rápido que tú y canjeo la recarga disponible. No te desanimes, espera a la hora de la próxima recarga y sé más rápido esta vez. Las recargas disponibles se mostrarán en al inicio de cada día.', $response);
+	}
 
-		 $response->setTemplate('message.ejs', [
-				 'header' => '¡Sigue intentando!',
-				 'icon'   => 'sentiment_very_dissatisfied',
-				 'text'   => 'Lamentablemente, alguien más fue un poco más rápido que tú y canjeo la recarga del día. No te desanimes, mañana tendrás otra oportunidad para tratar de canjearla.',
-				 'button' => ['href' => 'RECARGAS ANTERIORES', 'caption' => 'Ver recargas']]);
+	/**
+	 * Return an error message to be displayed
+	 *
+	 * @param String $errorMessage 
+	 * @param Response $response
+	 * @return Response
+	 */
+	private function displayError(String $errorMessage, Response $response): Response
+	{
+		return $response->setTemplate('message.ejs', [
+			'header' => 'Canje rechazado',
+			'icon' => 'sentiment_very_dissatisfied',
+			'text' => $errorMessage,
+			'button' => ['href' => 'RECARGAS', 'caption' => 'Reintentar']
+		]);
+	}
+
+	/**
+	 * Check and format a cellphone number from Cuba
+	 *
+	 * @param String $number
+	 * @return Bool
+	 */
+	private function checkNumber($number)
+	{
+		$number = trim(str_replace(['-', ' ', '+', '(', ')'], '', $number));
+		if (strlen($number) === 8) $number = "53$number";
+		if (strlen($number) !== 10) return false;
+		if (strpos($number, '53')!==0) return false;
+		return true;
 	}
 }

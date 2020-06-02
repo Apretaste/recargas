@@ -1,25 +1,28 @@
 <div class="row">
-    <div class="col s12">
-        <ul class="tabs tabs-fixed-width">
-            <li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS'})">Recarga Diaria</a></li>
-            <li class="tab"><a href="#" class="active">Últimos canjes</a></li>
-        </ul>
+	<div class="col s12">
+		<ul class="tabs tabs-fixed-width">
+			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS'})">Recargas</a></li>
+			<li class="tab"><a href="#" class="active">Ganadores</a></li>
+			<li class="tab"><a href="#" onclick="apretaste.send({command: 'RECARGAS AYUDA'})">Ayuda</a></li>
+		</ul>
+	</div>
+</div>
 
-        <p>Felicitamos a todos nuestros usuarios que han conseguido el crédito necesario y canjeado una recarga. Para
-            que todos los conozcan, listamos los últimos veinte a continuación</p>
-
-        <ul class="collection">
-            <% recharges.forEach(function(recharge) { %>
-                <li class="collection-item avatar" style="min-height: auto">
-                    <div class="circle"
-                         style="<%= getAvatar(recharge.avatar, "{{APP_SERVICE_PATH}}/images") %> background-color: <%= colors[recharge.avatarColor] %>;">
-                    </div>
-
-                    <span class="title"><b
-                                onclick="apretaste.send({'command':'PERFIL','data':{'username':'<%= recharge.username %>'}})">@<%= recharge.username %></b></span>
-                    <p><%= recharge.inserted %></p>
-                </li>
-            <% }) %>
-        </ul>
-    </div>
+<div class="row">
+	<% recharges.forEach(function(item) { %>
+		<% var today = moment(item.bought).startOf('day').isSame(moment().startOf('day')) ? 'today' : ''; %>
+		<div class="col s4 m2">
+			<div class="card center-align <%= today %>" onclick="profile('<%= item.username %>')">
+				<div class="content">
+					<div class="person-avatar circle" face="<%= item.avatar %>" color="<%= item.avatarColor %>" size="40" online="1"></div>
+					<div class="<%= item.gender %>">@<%= short(item.username) %></div>
+				</div>
+				<div class="action grey lighten-2 green-text">
+					<%= moment(item.bought).format("DD/MM/YYYY") %>
+					<br>
+					<%= moment(item.bought).format("h:mm:ss A") %>
+				</div>
+			</div>
+		</div>
+	<% }) %>
 </div>

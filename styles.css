@@ -1,7 +1,96 @@
-.bottom-space {
-	margin-bottom: 60px;
+.small {
+	font-size: smaller;
 }
 
-.avatar .circle{
-	background-size: contain;
+/* modal */
+
+.math-challenge {
+	font-size: x-large;
+	font-weight: bold;
+}
+
+.modal-content {
+	padding: 0px 20px !important;
+}
+
+/* gender colors */
+
+.M {
+	color: #5c6bc0;
+}
+
+.F {
+	color: #ec407a;
+}
+
+/* changes to the cards */
+
+.card .person-avatar {
+	margin: 5px auto;
+}
+
+.card .content {
+	padding: 5px;
+}
+
+.card .action {
+	padding: 5px 0px;
+	font-size: smaller;
+}
+
+.card .action .material-icons {
+	position: relative;
+	top: 3px;
+	font-size: 1.5rem;
+	margin: 0px 5px;
+}
+
+.card .action a {
+	color: inherit;
+}
+
+.card.today {
+	background-color: #e6ee9c;
+}
+
+.card.today .action {
+	background-color: #d4e157 !important;
+	color: #212121 !important;
+}
+
+/* changes to the collections */
+
+.completed {
+	opacity: 0.3;
+}
+
+.cross-out {
+	text-decoration: line-through;
+}
+
+.collection {
+	border: 0px;
+}
+
+.collection-item {
+	min-height: 65px !important;
+	margin-bottom: 20px !important;
+	border: 1px solid #e0e0e0 !important;
+}
+
+.collection-item .title {
+	font-weight: 600;
+}
+
+.collection-item .times {
+	font-size: smaller;
+	line-height: 1rem;
+	list-style-type: circle !important;
+	padding-left: 16px;
+}
+
+/* bottom space */
+
+.bottom-space {
+	margin-bottom: 80px;
 }
