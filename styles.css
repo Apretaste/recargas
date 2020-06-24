@@ -2,7 +2,7 @@
 	font-size: smaller;
 }
 
-/* modal */
+/* MODAL */
 
 .math-challenge {
 	font-size: x-large;
@@ -13,7 +13,7 @@
 	padding: 0px 20px !important;
 }
 
-/* gender colors */
+/* GENDER COLORS */
 
 .M {
 	color: #5c6bc0;
@@ -23,7 +23,7 @@
 	color: #ec407a;
 }
 
-/* changes to the cards */
+/* CHANGES TO THE CARDS */
 
 .card .person-avatar {
 	margin: 5px auto;
@@ -58,7 +58,7 @@
 	color: #212121 !important;
 }
 
-/* changes to the collections */
+/* CHANGES TO THE COLLECTIONS */
 
 .completed {
 	opacity: 0.3;
@@ -68,14 +68,8 @@
 	text-decoration: line-through;
 }
 
-.collection {
-	border: 0px;
-}
-
 .collection-item {
 	min-height: 65px !important;
-	margin-bottom: 20px !important;
-	border: 1px solid #e0e0e0 !important;
 }
 
 .collection-item .title {
@@ -89,8 +83,23 @@
 	padding-left: 16px;
 }
 
-/* bottom space */
+/* BOTTOM SPACE */
 
 .bottom-space {
 	margin-bottom: 80px;
+}
+
+/* NUMBERS LIST */
+
+.collection.number-list .collection-item {
+	padding-left: 50px;
+}
+
+.collection.number-list .number {
+	width: 30px !important;
+	height: 30px !important;
+	line-height: 30px !important;
+	top: 15px  !important;
+	left: 10px !important;
+	font-style: normal;
 }

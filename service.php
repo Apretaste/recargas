@@ -9,7 +9,7 @@ use Apretaste\Response;
 
 class Service
 {
-	private $inventoryCode = 'CUBACEL_10';
+	private $inventoryCode = 'CUBACEL_5';
 
 	/**
 	 * Display the steps to buy recharges
