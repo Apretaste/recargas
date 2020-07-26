@@ -14,8 +14,8 @@ class Service
 	/**
 	 * Display the steps to buy recharges
 	 *
-	 * @param  Request $request
-	 * @param  Response $response
+	 * @param Request $request
+	 * @param Response $response
 	 * @author salvipascual
 	 */
 	public function _main(Request $request, Response $response)
@@ -27,13 +27,14 @@ class Service
 		$schedule = Database::query('SELECT scheduled FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE ORDER BY scheduled ASC');
 
 		// create captcha
-		$nbr1 = rand(11, 20); $nbr2 = rand(1, 10);
+		$nbr1 = rand(11, 20);
+		$nbr2 = rand(1, 10);
 		$sign = rand(0, 1) === 0 ? '+' : '-';
 		$operation = "$nbr1 $sign $nbr2";
 		$result = ($sign == '+') ? $nbr1 + $nbr2 : $nbr1 - $nbr2;
 
 		// create the location for the captcha image
-		$operationImage = LOCAL_TEMP_FOLDER . md5(time() . rand(1,100)) . '.png';
+		$operationImage = LOCAL_TEMP_FOLDER . md5(time() . rand(1, 100)) . '.png';
 
 		// make operation to become an image
 		$im = imagecreate(67, 17);
@@ -117,7 +118,7 @@ class Service
 		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
 
 		$response->setCache('year');
-		$response->setTemplate('help.ejs', ['price' =>$rechargePrice]);
+		$response->setTemplate('help.ejs', ['price' => $rechargePrice]);
 	}
 
 	/**
@@ -139,7 +140,7 @@ class Service
 			return $this->displayError('Su usuario aún es nivel Topacio o superior. Siga usando la app para ganar experiencia y subir de nivel.', $response);
 		}
 
-		// check if your phone number is valid 
+		// check if your phone number is valid
 		if (!$this->checkNumber($request->person->phone)) {
 			return $this->displayError("El número que insertastes {$request->person->phone} no parece un teléfono válido de Cuba. Por favor modifica tu teléfono e intenta nuevamente.", $response);
 		}
@@ -158,7 +159,7 @@ class Service
 
 		// POSITIVE check if there is a recharge available for the user
 		$isARechargeAvailable = Database::queryFirst("SELECT COUNT(id) AS cnt FROM _recharges WHERE DATE(scheduled) = CURRENT_DATE AND scheduled < CURRENT_TIMESTAMP AND person_id IS NULL")->cnt > 0;
-		if($isARechargeAvailable) {
+		if ($isARechargeAvailable) {
 			// prepare a unique ID to ensure only one recharge is made
 			$securityCode = uniqid('', true);
 
@@ -199,6 +200,9 @@ class Service
 				}
 
 				// possitive response
+
+				Level::setExperience('RECHARGE', $request->person->id);
+
 				return $response->setTemplate('message.ejs', [
 					'header' => 'Canje realizado',
 					'icon' => 'sentiment_very_satisfied',
@@ -215,7 +219,7 @@ class Service
 	/**
 	 * Return an error message to be displayed
 	 *
-	 * @param String $errorMessage 
+	 * @param String $errorMessage
 	 * @param Response $response
 	 * @return Response
 	 */
@@ -238,9 +242,15 @@ class Service
 	private function checkNumber($number)
 	{
 		$number = trim(str_replace(['-', ' ', '+', '(', ')'], '', $number));
-		if (strlen($number) === 8) $number = "53$number";
-		if (strlen($number) !== 10) return false;
-		if (strpos($number, '53')!==0) return false;
+		if (strlen($number) === 8) {
+			$number = "53$number";
+		}
+		if (strlen($number) !== 10) {
+			return false;
+		}
+		if (strpos($number, '53') !== 0) {
+			return false;
+		}
 		return true;
 	}
 }
