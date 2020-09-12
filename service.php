@@ -66,6 +66,8 @@ class Service
 			'time' => date('g:i:s')
 		];
 
+		Challenges::complete('view-next-recharge', $request->person->id);
+
 		// send data to the view
 		$response->setTemplate('home.ejs', $content, [$operationImage]);
 	}
