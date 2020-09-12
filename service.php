@@ -6,6 +6,7 @@ use Apretaste\Money;
 use Apretaste\Level;
 use Apretaste\Request;
 use Apretaste\Response;
+use Apretaste\Challenges;
 
 class Service
 {
