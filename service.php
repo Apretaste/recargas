@@ -144,15 +144,6 @@ class Service
 	 */
 	public function _ayuda(Request $request, Response $response)
 	{
-		if ($request->person->appVersion < '7.0.0') {
-			return $response->setTemplate('message.ejs', [
-				'header' => 'Actualice la app',
-				'icon' => 'sentiment_very_dissatisfied',
-				'text' => "Para poder utilizar el servicio RECARGAS debe actualizar la app a la version 7 o superior",
-				'button' => ['href' => 'INICIO', 'caption' => 'Inicio']
-			]);
-		}
-
 		// get the price for the recharge
 		$rechargePrice = Database::queryCache("SELECT price FROM inventory WHERE code = '{$this->inventoryCode}'")[0]->price;
 
